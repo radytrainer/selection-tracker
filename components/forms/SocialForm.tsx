@@ -3,6 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Check,
+  CreditCard,
+  GraduationCap,
+  HeartPulse,
+  Home as HomeIcon,
+  Package,
+  ShieldAlert,
+  Users,
+  Wallet,
+  Wheat,
+  ClipboardCheck,
+  type LucideIcon,
+} from "lucide-react";
 import { socialFormSchema, type SocialFormValues } from "@/features/social-form/schema";
 import {
   ACADEMIC_RANK_POINTS,
@@ -25,16 +39,22 @@ import {
   SCHOOL_ATTENDANCE_POINTS,
   WATER_ACCESS_POINTS,
   computeSocialFormScore,
+  type SocialFormCategory,
 } from "@/features/social-form/scoring";
 import { ChoiceGroup } from "@/components/forms/ChoiceGroup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
 
 function opts<T extends string>(points: Record<T, number>, labels: Record<T, string>) {
   return (Object.keys(points) as T[]).map((value) => ({ value, label: labels[value], points: points[value] }));
+}
+
+function labelFor<T extends string | number>(options: { value: T; label: string }[], value: T | null | undefined) {
+  if (value == null || value === ("" as unknown as T)) return null;
+  return options.find((o) => o.value === value)?.label ?? null;
 }
 
 const HEALTH_OPTS = opts(HEALTH_STATUS_POINTS, {
@@ -80,11 +100,12 @@ const ELECTRICITY_OPTS = opts(ELECTRICITY_ACCESS_POINTS, {
   regular: "Regular connection",
 });
 const ASSET_OPTS = [
-  { value: 0, label: "0 — None", points: 0 },
-  { value: 1, label: "1 — Very few/old", points: 1 },
-  { value: 2, label: "2 — Some", points: 2 },
-  { value: 3, label: "3 — Many/modern", points: 3 },
+  { value: 0, label: "0", points: 0 },
+  { value: 1, label: "1", points: 1 },
+  { value: 2, label: "2", points: 2 },
+  { value: 3, label: "3", points: 3 },
 ];
+const ASSET_RANK_LABELS = ["None", "Very few/old", "Some", "Many/modern"];
 const INCOME_OPTS = opts(INCOME_POINTS, { lt_100: "< $100", "101_200": "$101–200", "201_400": "$201–400", gt_400: "> $400" });
 const EXPENSES_OPTS = opts(EXPENSES_POINTS, { lt_100: "< $100", "101_200": "$101–200", "201_400": "$201–400", gt_400: "> $400" });
 const EDUCATION_SUPPORT_OPTS = opts(EDUCATION_SUPPORT_POINTS, {
@@ -137,18 +158,49 @@ const VULNERABILITY_OPTS: { name: keyof SocialFormValues; label: string }[] = [
   { name: "vulnerability_landless", label: "Landless" },
 ];
 
-const STEPS = [
-  "Health & Academic",
-  "Household Profile",
-  "Housing & Utilities",
-  "Household Assets",
-  "Income & Expenses",
-  "Education Background",
-  "Debt",
-  "Farming & Plantation",
-  "Vulnerability & Husbandry",
-  "Summary",
+const STEPS: { title: string; icon: LucideIcon }[] = [
+  { title: "Health & Academic", icon: HeartPulse },
+  { title: "Household Profile", icon: Users },
+  { title: "Housing & Utilities", icon: HomeIcon },
+  { title: "Household Assets", icon: Package },
+  { title: "Income & Expenses", icon: Wallet },
+  { title: "Education Background", icon: GraduationCap },
+  { title: "Debt", icon: CreditCard },
+  { title: "Farming & Plantation", icon: Wheat },
+  { title: "Vulnerability & Husbandry", icon: ShieldAlert },
+  { title: "Summary", icon: ClipboardCheck },
 ];
+
+/** Band fields that count toward each step's "answered" progress dot. Free-text notes and the always-defaulted asset ranks aren't required, so they're left out. */
+const STEP_FIELDS: (keyof SocialFormValues)[][] = [
+  ["health_status", "academic_rank"],
+  ["household_size_band", "dependents_band", "parent_occupation_band"],
+  ["housing_type_band", "house_status_band", "water_access_band", "electricity_access_band"],
+  [],
+  ["income_band", "expenses_band", "education_support_band"],
+  ["father_education_band", "mother_education_band", "school_attendance_band"],
+  ["debt_band"],
+  ["farm_land_band", "farm_income_band", "plantation_land_band", "plantation_income_band"],
+  ["husbandry_band"],
+  [],
+];
+
+const CATEGORY_BADGE_CLASSES: Record<SocialFormCategory, string> = {
+  very_poor: "bg-red-100 text-red-700",
+  poor: "bg-amber-100 text-amber-700",
+  medium: "bg-blue-100 text-blue-700",
+  relatively_well_off: "bg-green-100 text-green-700",
+};
+
+function SectionHeading({ icon: Icon, title, hint }: { icon: LucideIcon; title: string; hint?: string }) {
+  return (
+    <div className="mb-2 flex items-center gap-2">
+      <Icon className="size-4 text-primary" />
+      <p className="text-sm font-medium">{title}</p>
+      {hint && <span className="text-xs text-muted-foreground">({hint})</span>}
+    </div>
+  );
+}
 
 const DEFAULT_VALUES: SocialFormValues = {
   ok_to_join_training: "",
@@ -228,6 +280,19 @@ export function SocialForm({
 
   const score = useMemo(() => computeSocialFormScore(values), [values]);
 
+  const stepProgress = useMemo(
+    () =>
+      STEP_FIELDS.map((fields) => {
+        if (fields.length === 0) return null;
+        const answered = fields.filter((f) => {
+          const v = values[f];
+          return v !== undefined && v !== null && v !== "";
+        }).length;
+        return { answered, total: fields.length };
+      }),
+    [values],
+  );
+
   async function handleSubmit(submitted: SocialFormValues) {
     setIsSubmitting(true);
     try {
@@ -239,32 +304,162 @@ export function SocialForm({
   }
 
   const isLastStep = step === STEPS.length - 1;
+  const CurrentIcon = STEPS[step].icon;
+
+  const reviewSections: { step: number; title: string; icon: LucideIcon; rows: { label: string; value: string }[] }[] = [
+    {
+      step: 0,
+      title: "Health & Academic",
+      icon: HeartPulse,
+      rows: [
+        { label: "Health", value: labelFor(HEALTH_OPTS, values.health_status) ?? "" },
+        { label: "Academic Performance", value: labelFor(ACADEMIC_OPTS, values.academic_rank) ?? "" },
+      ].filter((r) => r.value),
+    },
+    {
+      step: 1,
+      title: "Household Profile",
+      icon: Users,
+      rows: [
+        { label: "Household Size", value: labelFor(HOUSEHOLD_SIZE_OPTS, values.household_size_band) ?? "" },
+        { label: "Dependents", value: labelFor(DEPENDENTS_OPTS, values.dependents_band) ?? "" },
+        { label: "Parent Occupation", value: labelFor(PARENT_OCCUPATION_OPTS, values.parent_occupation_band) ?? "" },
+        { label: "Father", value: [values.father_age, values.father_job].filter(Boolean).join(" · ") },
+        { label: "Mother", value: [values.mother_age, values.mother_job].filter(Boolean).join(" · ") },
+      ].filter((r) => r.value),
+    },
+    {
+      step: 2,
+      title: "Housing & Utilities",
+      icon: HomeIcon,
+      rows: [
+        { label: "Housing Type", value: labelFor(HOUSING_TYPE_OPTS, values.housing_type_band) ?? "" },
+        { label: "House Status", value: labelFor(HOUSE_STATUS_OPTS, values.house_status_band) ?? "" },
+        { label: "Water Access", value: labelFor(WATER_ACCESS_OPTS, values.water_access_band) ?? "" },
+        { label: "Electricity", value: labelFor(ELECTRICITY_OPTS, values.electricity_access_band) ?? "" },
+      ].filter((r) => r.value),
+    },
+    {
+      step: 3,
+      title: "Household Assets",
+      icon: Package,
+      rows: [
+        { label: "Furniture", value: ASSET_RANK_LABELS[values.assets_furniture] },
+        { label: "Transport", value: ASSET_RANK_LABELS[values.assets_transport] },
+        { label: "Electronics", value: ASSET_RANK_LABELS[values.assets_electronics] },
+        { label: "Livestock", value: ASSET_RANK_LABELS[values.assets_livestock] },
+      ],
+    },
+    {
+      step: 4,
+      title: "Income & Expenses",
+      icon: Wallet,
+      rows: [
+        { label: "Monthly Income", value: labelFor(INCOME_OPTS, values.income_band) ?? "" },
+        { label: "Monthly Expenses", value: labelFor(EXPENSES_OPTS, values.expenses_band) ?? "" },
+        { label: "Can Support Education", value: labelFor(EDUCATION_SUPPORT_OPTS, values.education_support_band) ?? "" },
+      ].filter((r) => r.value),
+    },
+    {
+      step: 5,
+      title: "Education Background",
+      icon: GraduationCap,
+      rows: [
+        { label: "Father's Education", value: labelFor(PARENT_EDUCATION_OPTS, values.father_education_band) ?? "" },
+        { label: "Mother's Education", value: labelFor(PARENT_EDUCATION_OPTS, values.mother_education_band) ?? "" },
+        { label: "School Attendance", value: labelFor(SCHOOL_ATTENDANCE_OPTS, values.school_attendance_band) ?? "" },
+      ].filter((r) => r.value),
+    },
+    {
+      step: 6,
+      title: "Debt",
+      icon: CreditCard,
+      rows: [{ label: "Debt Status", value: labelFor(DEBT_OPTS, values.debt_band) ?? "" }].filter((r) => r.value),
+    },
+    {
+      step: 7,
+      title: "Farming & Plantation",
+      icon: Wheat,
+      rows: [
+        { label: "Farm Land", value: labelFor(LAND_OPTS, values.farm_land_band) ?? "" },
+        { label: "Farm Income", value: labelFor(INCOME_CONTRIBUTION_OPTS, values.farm_income_band) ?? "" },
+        { label: "Plantation Land", value: labelFor(LAND_OPTS, values.plantation_land_band) ?? "" },
+        { label: "Plantation Income", value: labelFor(INCOME_CONTRIBUTION_OPTS, values.plantation_income_band) ?? "" },
+      ].filter((r) => r.value),
+    },
+    {
+      step: 8,
+      title: "Vulnerability & Husbandry",
+      icon: ShieldAlert,
+      rows: [
+        {
+          label: "Vulnerabilities",
+          value: VULNERABILITY_OPTS.filter((v) => values[v.name])
+            .map((v) => v.label)
+            .join(", "),
+        },
+        { label: "Husbandry", value: labelFor(HUSBANDRY_OPTS, values.husbandry_band) ?? "" },
+      ].filter((r) => r.value),
+    },
+  ];
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5 pb-20">
-        <div className="sticky top-0 z-10 -mx-4 border-b bg-background px-4 py-2 sm:-mx-0 sm:rounded-md sm:border">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">
-              Step {step + 1}/{STEPS.length}: {STEPS[step]}
-            </span>
-            <span className="text-muted-foreground">
-              Score {score.finalScore} · {CATEGORY_LABELS[score.category]}
+        <div className="sticky top-0 z-10 -mx-4 space-y-2 border-b bg-background px-4 py-2.5 sm:-mx-0 sm:rounded-md sm:border">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <CurrentIcon className="size-4 text-primary" />
+              <span className="text-sm font-medium">{STEPS[step].title}</span>
+            </div>
+            <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", CATEGORY_BADGE_CLASSES[score.category])}>
+              {score.finalScore} pts · {CATEGORY_LABELS[score.category]}
             </span>
           </div>
-          <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
+          <div className="h-1.5 w-full rounded-full bg-muted">
             <div
               className="h-1.5 rounded-full bg-primary transition-all"
               style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
             />
+          </div>
+          <div className="-mx-1 flex gap-1 overflow-x-auto pb-0.5">
+            {STEPS.map((s, i) => {
+              const progress = stepProgress[i];
+              const isDone = progress ? progress.answered === progress.total : null;
+              const isPartial = progress ? progress.answered > 0 && progress.answered < progress.total : false;
+              const StepIcon = s.icon;
+              return (
+                <button
+                  key={s.title}
+                  type="button"
+                  onClick={() => setStep(i)}
+                  aria-label={`Go to step ${i + 1}: ${s.title}`}
+                  className={cn(
+                    "relative flex shrink-0 items-center justify-center rounded-full p-2 transition-colors",
+                    i === step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70",
+                  )}
+                >
+                  <StepIcon className="size-4" />
+                  {isDone && (
+                    <span className="absolute -right-0.5 -top-0.5 flex size-3 items-center justify-center rounded-full bg-green-600 text-white">
+                      <Check className="size-2" strokeWidth={4} />
+                    </span>
+                  )}
+                  {isPartial && (
+                    <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-amber-500" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {step === 0 && (
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Health</p>
+              <SectionHeading icon={HeartPulse} title="Health" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("health_status")}
                 onChange={(v) => form.setValue("health_status", v)}
                 options={HEALTH_OPTS}
@@ -283,7 +478,7 @@ export function SocialForm({
               )}
             />
             <div>
-              <p className="mb-2 text-sm font-medium">Academic Performance</p>
+              <SectionHeading icon={GraduationCap} title="Academic Performance" />
               <ChoiceGroup
                 value={form.watch("academic_rank")}
                 onChange={(v) => form.setValue("academic_rank", v)}
@@ -296,8 +491,9 @@ export function SocialForm({
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Household Size</p>
+              <SectionHeading icon={Users} title="Household Size" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("household_size_band")}
                 onChange={(v) => form.setValue("household_size_band", v)}
                 options={HOUSEHOLD_SIZE_OPTS}
@@ -315,8 +511,9 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Dependents (children/elderly/disabled)</p>
+              <SectionHeading icon={Users} title="Dependents" hint="children/elderly/disabled" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("dependents_band")}
                 onChange={(v) => form.setValue("dependents_band", v)}
                 options={DEPENDENTS_OPTS}
@@ -384,8 +581,9 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Parent/Guardian Occupation</p>
+              <SectionHeading icon={Wallet} title="Parent/Guardian Occupation" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("parent_occupation_band")}
                 onChange={(v) => form.setValue("parent_occupation_band", v)}
                 options={PARENT_OCCUPATION_OPTS}
@@ -409,7 +607,7 @@ export function SocialForm({
               )}
             />
             <div>
-              <p className="mb-2 text-sm font-medium">Type of Housing</p>
+              <SectionHeading icon={HomeIcon} title="Type of Housing" />
               <ChoiceGroup
                 value={form.watch("housing_type_band")}
                 onChange={(v) => form.setValue("housing_type_band", v)}
@@ -417,7 +615,7 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Status of the House</p>
+              <SectionHeading icon={HomeIcon} title="Status of the House" />
               <ChoiceGroup
                 value={form.watch("house_status_band")}
                 onChange={(v) => form.setValue("house_status_band", v)}
@@ -425,7 +623,7 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Water Access</p>
+              <SectionHeading icon={HomeIcon} title="Water Access" />
               <ChoiceGroup
                 value={form.watch("water_access_band")}
                 onChange={(v) => form.setValue("water_access_band", v)}
@@ -433,8 +631,9 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Electricity Access</p>
+              <SectionHeading icon={HomeIcon} title="Electricity Access" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("electricity_access_band")}
                 onChange={(v) => form.setValue("electricity_access_band", v)}
                 options={ELECTRICITY_OPTS}
@@ -444,7 +643,7 @@ export function SocialForm({
         )}
 
         {step === 3 && (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {(
               [
                 ["assets_furniture", "Furniture (bed, table, chairs)"],
@@ -454,8 +653,13 @@ export function SocialForm({
               ] as const
             ).map(([name, label]) => (
               <div key={name}>
-                <p className="mb-2 text-sm font-medium">{label}</p>
-                <ChoiceGroup value={form.watch(name)} onChange={(v) => form.setValue(name, v)} options={ASSET_OPTS} />
+                <SectionHeading icon={Package} title={label} hint={ASSET_RANK_LABELS[form.watch(name)]} />
+                <ChoiceGroup
+                  layout="segmented"
+                  value={form.watch(name)}
+                  onChange={(v) => form.setValue(name, v)}
+                  options={ASSET_OPTS}
+                />
               </div>
             ))}
           </div>
@@ -464,8 +668,9 @@ export function SocialForm({
         {step === 4 && (
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Household Income (monthly)</p>
+              <SectionHeading icon={Wallet} title="Household Income" hint="monthly" />
               <ChoiceGroup
+                layout="segmented"
                 value={form.watch("income_band")}
                 onChange={(v) => form.setValue("income_band", v)}
                 options={INCOME_OPTS}
@@ -483,8 +688,9 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Household Expenses (monthly)</p>
+              <SectionHeading icon={Wallet} title="Household Expenses" hint="monthly" />
               <ChoiceGroup
+                layout="segmented"
                 value={form.watch("expenses_band")}
                 onChange={(v) => form.setValue("expenses_band", v)}
                 options={EXPENSES_OPTS}
@@ -502,10 +708,9 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">
-                Can the family financially support the child&apos;s higher education without PNC?
-              </p>
+              <SectionHeading icon={GraduationCap} title="Can the family afford higher education without PNC?" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("education_support_band")}
                 onChange={(v) => form.setValue("education_support_band", v)}
                 options={EDUCATION_SUPPORT_OPTS}
@@ -528,16 +733,18 @@ export function SocialForm({
         {step === 5 && (
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Father&apos;s Education Level</p>
+              <SectionHeading icon={GraduationCap} title="Father's Education Level" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("father_education_band")}
                 onChange={(v) => form.setValue("father_education_band", v)}
                 options={PARENT_EDUCATION_OPTS}
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Mother&apos;s Education Level</p>
+              <SectionHeading icon={GraduationCap} title="Mother's Education Level" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("mother_education_band")}
                 onChange={(v) => form.setValue("mother_education_band", v)}
                 options={PARENT_EDUCATION_OPTS}
@@ -570,8 +777,9 @@ export function SocialForm({
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">School Attendance</p>
+              <SectionHeading icon={GraduationCap} title="School Attendance" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("school_attendance_band")}
                 onChange={(v) => form.setValue("school_attendance_band", v)}
                 options={SCHOOL_ATTENDANCE_OPTS}
@@ -583,7 +791,7 @@ export function SocialForm({
         {step === 6 && (
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Household Debt Status</p>
+              <SectionHeading icon={CreditCard} title="Household Debt Status" />
               <ChoiceGroup
                 value={form.watch("debt_band")}
                 onChange={(v) => form.setValue("debt_band", v)}
@@ -608,32 +816,36 @@ export function SocialForm({
         {step === 7 && (
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Farming — Land Ownership</p>
+              <SectionHeading icon={Wheat} title="Farming — Land Ownership" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("farm_land_band")}
                 onChange={(v) => form.setValue("farm_land_band", v)}
                 options={LAND_OPTS}
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Farming — Income Contribution</p>
+              <SectionHeading icon={Wheat} title="Farming — Income Contribution" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("farm_income_band")}
                 onChange={(v) => form.setValue("farm_income_band", v)}
                 options={INCOME_CONTRIBUTION_OPTS}
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Plantation — Land Ownership</p>
+              <SectionHeading icon={Wheat} title="Plantation — Land Ownership" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("plantation_land_band")}
                 onChange={(v) => form.setValue("plantation_land_band", v)}
                 options={LAND_OPTS}
               />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Plantation — Income Contribution</p>
+              <SectionHeading icon={Wheat} title="Plantation — Income Contribution" />
               <ChoiceGroup
+                layout="grid"
                 value={form.watch("plantation_income_band")}
                 onChange={(v) => form.setValue("plantation_income_band", v)}
                 options={INCOME_CONTRIBUTION_OPTS}
@@ -645,24 +857,39 @@ export function SocialForm({
         {step === 8 && (
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Vulnerability Factors (tick all that apply, −1 each)</p>
-              <div className="space-y-2">
-                {VULNERABILITY_OPTS.map(({ name, label }) => (
-                  <label
-                    key={name}
-                    className="flex items-center gap-3 rounded-md border px-3 py-3 text-sm hover:bg-muted"
-                  >
-                    <Checkbox
-                      checked={form.watch(name) as boolean}
-                      onCheckedChange={(checked) => form.setValue(name, checked === true)}
-                    />
-                    {label}
-                  </label>
-                ))}
+              <SectionHeading icon={ShieldAlert} title="Vulnerability Factors" hint="tick all that apply, −1 each" />
+              <div className="grid grid-cols-2 gap-2">
+                {VULNERABILITY_OPTS.map(({ name, label }) => {
+                  const checked = form.watch(name) as boolean;
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => form.setValue(name, !checked)}
+                      aria-pressed={checked}
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl border-2 px-3 py-3 text-left text-sm transition-all active:scale-[0.98]",
+                        checked
+                          ? "border-destructive bg-destructive/10 font-medium"
+                          : "border-border bg-background hover:border-destructive/40 hover:bg-muted",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
+                          checked ? "border-destructive bg-destructive text-white" : "border-muted-foreground/30",
+                        )}
+                      >
+                        {checked && <Check className="size-3.5" strokeWidth={3} />}
+                      </span>
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Husbandry</p>
+              <SectionHeading icon={ShieldAlert} title="Husbandry" />
               <ChoiceGroup
                 value={form.watch("husbandry_band")}
                 onChange={(v) => form.setValue("husbandry_band", v)}
@@ -674,20 +901,48 @@ export function SocialForm({
 
         {step === 9 && (
           <div className="space-y-5">
-            <div className="rounded-md border bg-muted/30 p-4 text-sm">
-              <p>
-                Total score: <span className="font-medium">{score.totalScore}</span>
-              </p>
-              <p>
-                Vulnerability deduction: <span className="font-medium">−{score.vulnerabilityDeduction}</span>
-              </p>
-              <p>
-                Final score: <span className="font-medium">{score.finalScore}</span>
-              </p>
-              <p>
-                Category: <span className="font-medium">{CATEGORY_LABELS[score.category]}</span>
+            <div className={cn("rounded-xl border-2 p-4", CATEGORY_BADGE_CLASSES[score.category], "border-current/20")}>
+              <p className="text-xs font-medium uppercase tracking-wide opacity-70">Final Assessment</p>
+              <p className="mt-1 text-2xl font-semibold">{CATEGORY_LABELS[score.category]}</p>
+              <p className="mt-1 text-sm opacity-80">
+                {score.totalScore} pts total − {score.vulnerabilityDeduction} vulnerability ={" "}
+                <span className="font-medium">{score.finalScore} pts</span>
               </p>
             </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Review your answers</p>
+              {reviewSections.map((section) => (
+                <div key={section.title} className="rounded-lg border p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <section.icon className="size-4 text-primary" />
+                      {section.title}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStep(section.step)}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                  {section.rows.length === 0 ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground">Not answered yet</p>
+                  ) : (
+                    <dl className="mt-1.5 space-y-1 text-xs">
+                      {section.rows.map((row) => (
+                        <div key={row.label} className="flex justify-between gap-3">
+                          <dt className="text-muted-foreground">{row.label}</dt>
+                          <dd className="text-right font-medium">{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </div>
+              ))}
+            </div>
+
             <FormField
               control={form.control}
               name="poverty_certificate"
