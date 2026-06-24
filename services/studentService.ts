@@ -13,7 +13,7 @@ export type StudentListItem = Student & {
 
 type ExamResult = Database["public"]["Tables"]["exam_results"]["Row"];
 type Interview = Database["public"]["Tables"]["interviews"]["Row"];
-type HomeVisit = Database["public"]["Tables"]["home_visits"]["Row"];
+type SocialAssessment = Database["public"]["Tables"]["social_assessments"]["Row"];
 type CommitteeDecision = Database["public"]["Tables"]["committee_decisions"]["Row"];
 
 export type StudentDetail = Student & {
@@ -21,11 +21,11 @@ export type StudentDetail = Student & {
   school_partners: { school_name: string } | null;
   // exam_results/interviews/committee_decisions all have a `unique`
   // constraint on student_id, so PostgREST embeds them as a single to-one
-  // object (or null) rather than an array. home_visits has no such
+  // object (or null) rather than an array. social_assessments has no such
   // constraint (multiple visits per student), so it stays an array.
   exam_results: ExamResult | null;
   interviews: Interview | null;
-  home_visits: HomeVisit[];
+  social_assessments: SocialAssessment[];
   committee_decisions: CommitteeDecision | null;
 };
 
@@ -77,7 +77,7 @@ export async function getStudent(id: string) {
   const { data, error } = await supabase
     .from("students")
     .select(
-      "*, provinces(name_en), school_partners(school_name), exam_results(*), interviews(*), home_visits(*), committee_decisions(*)",
+      "*, provinces(name_en), school_partners(school_name), exam_results(*), interviews(*), social_assessments(*), committee_decisions(*)",
     )
     .eq("id", id)
     .is("deleted_at", null)

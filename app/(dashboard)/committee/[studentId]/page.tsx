@@ -28,6 +28,7 @@ import { CommitteeRatingPanel } from "@/components/committee/CommitteeRatingPane
 import { ExamScoreChart } from "@/components/committee/ExamScoreChart";
 import { InterviewScoreChart } from "@/components/committee/InterviewScoreChart";
 import { RatingAverageChart } from "@/components/committee/RatingAverageChart";
+import { CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   strongly_recommend: "Strongly Recommend",
@@ -88,8 +89,7 @@ export default function CommitteeDossierPage() {
     return <p className="text-sm text-muted-foreground">Student not found.</p>;
   }
 
-  const homeVisit = student.home_visits[0] ?? null;
-  const familyIncome = homeVisit?.family_income ?? student.family_income_monthly;
+  const socialAssessment = student.social_assessments[0] ?? null;
 
   return (
     <div className="space-y-6">
@@ -122,7 +122,12 @@ export default function CommitteeDossierPage() {
             <p>Province: {student.provinces?.name_en ?? "—"}</p>
             <p>School: {student.school_partners?.school_name ?? "—"}</p>
             <p>GPA: {student.gpa ?? "—"}</p>
-            <p>Family income: {familyIncome != null ? `$${familyIncome}/mo` : "—"}</p>
+            <p>
+              Social form:{" "}
+              {socialAssessment
+                ? `${CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} (${socialAssessment.final_score})`
+                : "—"}
+            </p>
           </CardContent>
         </Card>
 
@@ -182,24 +187,24 @@ export default function CommitteeDossierPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Home Visit</CardTitle>
-            <CardDescription>{student.home_visits.length} visit(s) recorded</CardDescription>
+            <CardTitle>Social Form</CardTitle>
+            <CardDescription>{student.social_assessments.length} visit(s) recorded</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {student.home_visits.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No home visit yet.</p>
+            {student.social_assessments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No social form yet.</p>
             ) : (
-              student.home_visits.map((visit) => (
-                <div key={visit.id} className="space-y-1 border-b pb-2 text-sm last:border-0">
-                  <p className="font-medium">Visit #{visit.visit_number}</p>
-                  <p>House Type: {visit.house_type ?? "—"}</p>
-                  <p>Family Income: {visit.family_income != null ? `$${visit.family_income}/mo` : "—"}</p>
-                  <p>Electricity: {visit.electricity_access ? "Yes" : "No"} · Internet: {visit.internet_access ? "Yes" : "No"}</p>
-                  {visit.family_condition_notes && <p>Notes: {visit.family_condition_notes}</p>}
+              student.social_assessments.map((assessment) => (
+                <div key={assessment.id} className="space-y-1 border-b pb-2 text-sm last:border-0">
+                  <p className="font-medium">Visit #{assessment.visit_number}</p>
+                  <p>Housing: {assessment.housing_type_band?.replace(/_/g, " ") ?? "—"}</p>
+                  <p>Income Band: {assessment.income_band?.replace(/_/g, "-") ?? "—"}</p>
                   <p>
-                    Recommendation:{" "}
-                    {visit.recommendation ? RECOMMENDATION_LABELS[visit.recommendation] : "—"}
+                    Final Score: {assessment.final_score} ·{" "}
+                    {CATEGORY_LABELS[assessment.category as SocialFormCategory]}
                   </p>
+                  <p>Poverty Certificate: {assessment.poverty_certificate || "—"}</p>
+                  {assessment.visitor_comments && <p>Notes: {assessment.visitor_comments}</p>}
                 </div>
               ))
             )}

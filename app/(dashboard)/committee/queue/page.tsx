@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   strongly_recommend: "Strongly recommends",
@@ -27,10 +28,6 @@ const RECOMMENDATION_LABELS: Record<string, string> = {
   neutral: "Neutral",
   not_recommend: "Does not recommend",
 };
-
-function formatUsd(value: number | null) {
-  return value != null ? `$${value.toLocaleString()}/mo` : "Not recorded";
-}
 
 function ratingSummary(student: CommitteeQueueItem) {
   if (student.committee_ratings.length === 0) return "No ratings yet";
@@ -99,8 +96,7 @@ export default function CommitteeQueuePage() {
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {queue.map((student) => {
-                const homeVisit = student.home_visits[0] ?? null;
-                const familyIncome = homeVisit?.family_income ?? student.family_income_monthly;
+                const socialAssessment = student.social_assessments[0] ?? null;
 
                 return (
                   <Link key={student.id} href={`/committee/${student.id}`} className="block">
@@ -116,8 +112,13 @@ export default function CommitteeQueuePage() {
                       </CardHeader>
                       <CardContent className="space-y-2 text-xs text-muted-foreground">
                         <p>
-                          Family income: <span className="text-foreground">{formatUsd(familyIncome)}</span> · GPA:{" "}
-                          <span className="text-foreground">{student.gpa ?? "—"}</span>
+                          Social form:{" "}
+                          <span className="text-foreground">
+                            {socialAssessment
+                              ? `${CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} (${socialAssessment.final_score})`
+                              : "Not recorded"}
+                          </span>{" "}
+                          · GPA: <span className="text-foreground">{student.gpa ?? "—"}</span>
                         </p>
                         <p>
                           Exam:{" "}

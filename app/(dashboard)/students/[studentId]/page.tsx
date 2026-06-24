@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { getStudent, type StudentDetail } from "@/services/studentService";
 import { sendToCommittee } from "@/services/committeeService";
+import { CATEGORY_LABELS } from "@/features/social-form/scoring";
 import {
   Card,
   CardContent,
@@ -87,7 +88,7 @@ export default function StudentDetailPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="exam">Exam</TabsTrigger>
           <TabsTrigger value="interview">Interview</TabsTrigger>
-          <TabsTrigger value="home-visit">Home Visit</TabsTrigger>
+          <TabsTrigger value="social-form">Social Form</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
 
@@ -150,7 +151,7 @@ export default function StudentDetailPage() {
             <CardContent className="space-y-2 text-sm">
               <p>Exam: {student.exam_results ? "Completed" : "Pending"}</p>
               <p>Interview: {student.interviews ? "Completed" : "Pending"}</p>
-              <p>Home Visit: {student.home_visits?.length ? "Completed" : "Pending"}</p>
+              <p>Home Visit: {student.social_assessments?.length ? "Completed" : "Pending"}</p>
               <p>Committee Decision: {student.committee_decisions?.decision ?? "Pending"}</p>
               {student.status === "home_visit_completed" && (
                 <RoleGate capability="createEditStudents">
@@ -216,32 +217,28 @@ export default function StudentDetailPage() {
           </RoleGate>
         </TabsContent>
 
-        <TabsContent value="home-visit" className="max-w-md space-y-4">
-          {student.home_visits.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No home visit recorded yet.</p>
+        <TabsContent value="social-form" className="max-w-md space-y-4">
+          {student.social_assessments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No social form recorded yet.</p>
           ) : (
-            student.home_visits.map((visit) => (
-              <div key={visit.id} className="space-y-1 border-b pb-3 text-sm last:border-0">
-                <p className="font-medium">Visit #{visit.visit_number}</p>
-                <p>House Type: {visit.house_type ?? "—"}</p>
-                <p>Family Income: {visit.family_income != null ? `$${visit.family_income}/mo` : "—"}</p>
-                <p>Transportation: {visit.transportation ?? "—"}</p>
-                <p>Electricity: {visit.electricity_access ? "Yes" : "No"}</p>
-                <p>Internet: {visit.internet_access ? "Yes" : "No"}</p>
-                {visit.family_condition_notes && <p>Notes: {visit.family_condition_notes}</p>}
-                <p>
-                  Recommendation:{" "}
-                  {visit.recommendation ? RECOMMENDATION_LABELS[visit.recommendation] : "—"}
-                </p>
+            student.social_assessments.map((assessment) => (
+              <div key={assessment.id} className="space-y-1 border-b pb-3 text-sm last:border-0">
+                <p className="font-medium">Visit #{assessment.visit_number}</p>
+                <p>Final Score: {assessment.final_score}</p>
+                <p>Category: {CATEGORY_LABELS[assessment.category]}</p>
+                <p>Housing: {assessment.housing_type_band?.replace(/_/g, " ") ?? "—"}</p>
+                <p>Monthly Income Band: {assessment.income_band?.replace(/_/g, "-") ?? "—"}</p>
+                <p>Poverty Certificate: {assessment.poverty_certificate || "—"}</p>
+                {assessment.visitor_comments && <p>Comments: {assessment.visitor_comments}</p>}
               </div>
             ))
           )}
           <RoleGate capability="enterHomeVisitData">
             <Link
-              href={`/students/${student.id}/home-visit`}
+              href={`/students/${student.id}/social-form`}
               className={buttonVariants({ size: "sm", variant: "outline" })}
             >
-              {student.home_visits.length === 0 ? "Enter Home Visit" : "Add Re-Visit"}
+              {student.social_assessments.length === 0 ? "Enter Social Form" : "Edit Social Form"}
             </Link>
           </RoleGate>
         </TabsContent>

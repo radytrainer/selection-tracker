@@ -529,6 +529,146 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["home_visit_media"]["Insert"]>;
         Relationships: [];
       };
+      social_assessments: {
+        Row: {
+          id: string;
+          student_id: string;
+          cycle_id: string;
+          visit_number: number;
+          health_status: "healthy" | "simple_disease" | "chronic_disease" | null;
+          ok_to_join_training: string | null;
+          academic_rank: "outstanding_ab" | "good_cd" | "average_e" | null;
+          household_size_band: "1_3" | "4_6" | "7_plus" | null;
+          household_size_note: string | null;
+          dependents_band: "none" | "1_2" | "3_plus" | null;
+          dependents_note: string | null;
+          father_age: number | null;
+          father_job: string | null;
+          mother_age: number | null;
+          mother_job: string | null;
+          parent_occupation_band:
+            | "unemployed"
+            | "daily_laborer"
+            | "farmer"
+            | "small_business"
+            | "stable_salaried"
+            | null;
+          house_owner: string | null;
+          housing_type_band: "makeshift" | "wooden_zinc" | "brick_concrete" | "permanent" | null;
+          house_status_band: "rented" | "family_fragile" | "family_fair" | "family_strong" | null;
+          water_access_band: "river_pond" | "communal_well" | "own_well" | "piped" | null;
+          electricity_access_band: "none" | "shared_solar" | "regular" | null;
+          assets_furniture: number | null;
+          assets_transport: number | null;
+          assets_electronics: number | null;
+          assets_livestock: number | null;
+          income_band: "lt_100" | "101_200" | "201_400" | "gt_400" | null;
+          income_note: string | null;
+          expenses_band: "lt_100" | "101_200" | "201_400" | "gt_400" | null;
+          expenses_note: string | null;
+          education_support_band: "no" | "maybe" | "yes" | null;
+          education_support_note: string | null;
+          father_education_band: "none" | "primary" | "secondary" | "high_school_above" | null;
+          mother_education_band: "none" | "primary" | "secondary" | "high_school_above" | null;
+          school_aged_children_studying: number | null;
+          school_aged_children_working: number | null;
+          school_attendance_band: "none" | "some_irregular" | "most_attend" | "all_attend" | null;
+          debt_band: "no_debt" | "small_manageable" | "high_burden" | "very_high_risk" | null;
+          debt_amount: string | null;
+          farm_land_band: "landless" | "small" | "medium" | "large" | null;
+          farm_income_band: "none" | "minimal" | "moderate" | "major" | null;
+          plantation_land_band: "landless" | "small" | "medium" | "large" | null;
+          plantation_income_band: "none" | "minimal" | "moderate" | "major" | null;
+          vulnerability_orphan_single_parent: boolean;
+          vulnerability_disability: boolean;
+          vulnerability_chronic_illness: boolean;
+          vulnerability_debt_burden: boolean;
+          vulnerability_landless: boolean;
+          husbandry_band: "none" | "small" | "medium" | "large" | null;
+          total_score: number;
+          vulnerability_deduction: number;
+          final_score: number;
+          category: "very_poor" | "poor" | "medium" | "relatively_well_off";
+          poverty_certificate: string | null;
+          distance_from_town: string | null;
+          visitor_name: string | null;
+          visitor_comments: string | null;
+          visitor_id: string | null;
+          visit_date: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          student_id: string;
+          cycle_id: string;
+          visit_number?: number;
+          health_status?: "healthy" | "simple_disease" | "chronic_disease" | null;
+          ok_to_join_training?: string | null;
+          academic_rank?: "outstanding_ab" | "good_cd" | "average_e" | null;
+          household_size_band?: "1_3" | "4_6" | "7_plus" | null;
+          household_size_note?: string | null;
+          dependents_band?: "none" | "1_2" | "3_plus" | null;
+          dependents_note?: string | null;
+          father_age?: number | null;
+          father_job?: string | null;
+          mother_age?: number | null;
+          mother_job?: string | null;
+          parent_occupation_band?:
+            | "unemployed"
+            | "daily_laborer"
+            | "farmer"
+            | "small_business"
+            | "stable_salaried"
+            | null;
+          house_owner?: string | null;
+          housing_type_band?: "makeshift" | "wooden_zinc" | "brick_concrete" | "permanent" | null;
+          house_status_band?: "rented" | "family_fragile" | "family_fair" | "family_strong" | null;
+          water_access_band?: "river_pond" | "communal_well" | "own_well" | "piped" | null;
+          electricity_access_band?: "none" | "shared_solar" | "regular" | null;
+          assets_furniture?: number | null;
+          assets_transport?: number | null;
+          assets_electronics?: number | null;
+          assets_livestock?: number | null;
+          income_band?: "lt_100" | "101_200" | "201_400" | "gt_400" | null;
+          income_note?: string | null;
+          expenses_band?: "lt_100" | "101_200" | "201_400" | "gt_400" | null;
+          expenses_note?: string | null;
+          education_support_band?: "no" | "maybe" | "yes" | null;
+          education_support_note?: string | null;
+          father_education_band?: "none" | "primary" | "secondary" | "high_school_above" | null;
+          mother_education_band?: "none" | "primary" | "secondary" | "high_school_above" | null;
+          school_aged_children_studying?: number | null;
+          school_aged_children_working?: number | null;
+          school_attendance_band?: "none" | "some_irregular" | "most_attend" | "all_attend" | null;
+          debt_band?: "no_debt" | "small_manageable" | "high_burden" | "very_high_risk" | null;
+          debt_amount?: string | null;
+          farm_land_band?: "landless" | "small" | "medium" | "large" | null;
+          farm_income_band?: "none" | "minimal" | "moderate" | "major" | null;
+          plantation_land_band?: "landless" | "small" | "medium" | "large" | null;
+          plantation_income_band?: "none" | "minimal" | "moderate" | "major" | null;
+          vulnerability_orphan_single_parent?: boolean;
+          vulnerability_disability?: boolean;
+          vulnerability_chronic_illness?: boolean;
+          vulnerability_debt_burden?: boolean;
+          vulnerability_landless?: boolean;
+          husbandry_band?: "none" | "small" | "medium" | "large" | null;
+          total_score: number;
+          vulnerability_deduction?: number;
+          final_score: number;
+          category: "very_poor" | "poor" | "medium" | "relatively_well_off";
+          poverty_certificate?: string | null;
+          distance_from_town?: string | null;
+          visitor_name?: string | null;
+          visitor_comments?: string | null;
+          visitor_id?: string | null;
+          visit_date?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["social_assessments"]["Insert"]>;
+        Relationships: [];
+      };
       committee_decisions: {
         Row: {
           id: string;

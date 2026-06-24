@@ -20,11 +20,12 @@ type StudentAggRow = {
   province_id: string | null;
   // exam_results/interviews/committee_decisions embed as a single object (or
   // null) rather than an array: their FK to students carries a `unique`
-  // constraint, so PostgREST treats the relationship as to-one. home_visits
-  // has no such constraint (multiple visits per student), so it stays an array.
+  // constraint, so PostgREST treats the relationship as to-one.
+  // social_assessments has no such constraint (multiple visits per
+  // student), so it stays an array.
   exam_results: { id: string } | null;
   interviews: { id: string } | null;
-  home_visits: { id: string }[];
+  social_assessments: { id: string }[];
   committee_decisions: { decision: string | null } | null;
 };
 
@@ -47,7 +48,7 @@ export async function getProvinceStats(cycleId?: string): Promise<ProvinceStats[
   let studentQuery = supabase
     .from("students")
     .select(
-      "id, gender, province_id, exam_results(id), interviews(id), home_visits(id), committee_decisions(decision)",
+      "id, gender, province_id, exam_results(id), interviews(id), social_assessments(id), committee_decisions(decision)",
     )
     .is("deleted_at", null);
   if (cycleId) studentQuery = studentQuery.eq("cycle_id", cycleId);
@@ -75,7 +76,7 @@ export async function getProvinceStats(cycleId?: string): Promise<ProvinceStats[
       otherStudents: rows.filter((r) => r.gender !== "male" && r.gender !== "female").length,
       examCompleted: rows.filter((r) => r.exam_results).length,
       interviewCompleted: rows.filter((r) => r.interviews).length,
-      homeVisitCompleted: rows.filter((r) => r.home_visits?.length).length,
+      homeVisitCompleted: rows.filter((r) => r.social_assessments?.length).length,
       selectedStudents: rows.filter((r) => r.committee_decisions?.decision === "selected").length,
     };
   });

@@ -20,7 +20,7 @@ export type CommitteeQueueItem = {
   // PostgREST embeds them as a single to-one object (or null).
   exam_results: { total_score: number; rank_in_cycle: number | null; pass_status: string | null } | null;
   interviews: { recommendation: string | null } | null;
-  home_visits: { family_income: number | null; family_condition_notes: string | null; recommendation: string | null }[];
+  social_assessments: { final_score: number; category: string; visitor_comments: string | null }[];
   committee_ratings: CommitteeRatingRow[];
 };
 
@@ -29,7 +29,7 @@ const QUEUE_SELECT = `
   provinces(name_en), school_partners(school_name),
   exam_results(total_score, rank_in_cycle, pass_status),
   interviews(recommendation),
-  home_visits(family_income, family_condition_notes, recommendation),
+  social_assessments(final_score, category, visitor_comments),
   committee_ratings(*)
 `;
 
@@ -138,16 +138,15 @@ export type CommitteeDossier = {
     comments: string | null;
     recommendation: string | null;
   } | null;
-  home_visits: {
+  social_assessments: {
     id: string;
     visit_number: number;
-    house_type: string | null;
-    family_income: number | null;
-    transportation: string | null;
-    electricity_access: boolean;
-    internet_access: boolean;
-    family_condition_notes: string | null;
-    recommendation: string | null;
+    housing_type_band: string | null;
+    income_band: string | null;
+    final_score: number;
+    category: string;
+    poverty_certificate: string | null;
+    visitor_comments: string | null;
   }[];
   committee_decisions: { decision: string | null; decision_date: string | null; approval_status: string } | null;
   committee_ratings: CommitteeRatingRow[];
@@ -158,7 +157,7 @@ const DOSSIER_SELECT = `
   provinces(name_en), school_partners(school_name),
   exam_results(math_score, english_score, logic_score, computer_score, total_score, rank_in_cycle, rank_in_province, pass_status),
   interviews(communication_score, leadership_score, motivation_score, confidence_score, critical_thinking_score, comments, recommendation),
-  home_visits(id, visit_number, house_type, family_income, transportation, electricity_access, internet_access, family_condition_notes, recommendation),
+  social_assessments(id, visit_number, housing_type_band, income_band, final_score, category, poverty_certificate, visitor_comments),
   committee_decisions(decision, decision_date, approval_status),
   committee_ratings(*)
 `;
