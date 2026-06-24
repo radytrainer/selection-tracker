@@ -107,6 +107,74 @@ export async function approveCommitteeDecision(decisionId: string, approve: bool
   if (error) throw error;
 }
 
+export type CommitteeDossier = {
+  id: string;
+  student_code: string;
+  first_name: string;
+  last_name: string;
+  gender: string;
+  status: string;
+  cycle_id: string;
+  gpa: number | null;
+  family_income_monthly: number | null;
+  provinces: { name_en: string } | null;
+  school_partners: { school_name: string } | null;
+  exam_results: {
+    math_score: number;
+    english_score: number;
+    logic_score: number;
+    computer_score: number;
+    total_score: number;
+    rank_in_cycle: number | null;
+    rank_in_province: number | null;
+    pass_status: string | null;
+  } | null;
+  interviews: {
+    communication_score: number | null;
+    leadership_score: number | null;
+    motivation_score: number | null;
+    confidence_score: number | null;
+    critical_thinking_score: number | null;
+    comments: string | null;
+    recommendation: string | null;
+  } | null;
+  home_visits: {
+    id: string;
+    visit_number: number;
+    house_type: string | null;
+    family_income: number | null;
+    transportation: string | null;
+    electricity_access: boolean;
+    internet_access: boolean;
+    family_condition_notes: string | null;
+    recommendation: string | null;
+  }[];
+  committee_decisions: { decision: string | null; decision_date: string | null; approval_status: string } | null;
+  committee_ratings: CommitteeRatingRow[];
+};
+
+const DOSSIER_SELECT = `
+  id, student_code, first_name, last_name, gender, status, cycle_id, gpa, family_income_monthly,
+  provinces(name_en), school_partners(school_name),
+  exam_results(math_score, english_score, logic_score, computer_score, total_score, rank_in_cycle, rank_in_province, pass_status),
+  interviews(communication_score, leadership_score, motivation_score, confidence_score, critical_thinking_score, comments, recommendation),
+  home_visits(id, visit_number, house_type, family_income, transportation, electricity_access, internet_access, family_condition_notes, recommendation),
+  committee_decisions(decision, decision_date, approval_status),
+  committee_ratings(*)
+`;
+
+/** Single-student consolidated view backing the Committee Dossier page. */
+export async function getCommitteeDossier(studentId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("students")
+    .select(DOSSIER_SELECT)
+    .eq("id", studentId)
+    .single();
+  if (error) throw error;
+  return data as unknown as CommitteeDossier;
+}
+
 /** Manual hand-off after the home visit is done — the case is "presented" to the committee. */
 export async function sendToCommittee(studentId: string) {
   const supabase = createClient();
