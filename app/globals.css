@@ -144,3 +144,14 @@
 .map-count-label::before {
   display: none;
 }
+
+/* Horizontally-scrollable strips (tabs on narrow screens, the Social Form
+   step navigator) — keep the swipe/scroll behavior, hide the native
+   scrollbar chrome that otherwise looks out of place on a touch UI. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

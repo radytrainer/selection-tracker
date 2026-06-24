@@ -13,6 +13,7 @@ import {
   HeartHandshake,
   Languages,
   Mic,
+  Pencil,
   Send,
   User,
   UsersRound,
@@ -243,7 +244,7 @@ export default function StudentDetailPage() {
       </Card>
 
       <Tabs defaultValue="overview">
-        <div className="-mx-1 overflow-x-auto px-1">
+        <div className="scrollbar-hide -mx-1 overflow-x-auto px-1">
           <TabsList>
             <TabsTrigger value="overview" className="gap-1.5">
               <User className="size-4" />
@@ -350,7 +351,8 @@ export default function StudentDetailPage() {
             <p className="text-sm text-muted-foreground">No exam scores entered yet.</p>
           )}
           <RoleGate capability="enterExamScores">
-            <Link href={`/students/${student.id}/exam`} className={buttonVariants({ size: "sm", variant: "outline" })}>
+            <Link href={`/students/${student.id}/exam`} className={buttonVariants({ className: "w-full gap-1.5 sm:w-auto" })}>
+              <Pencil className="size-4" />
               {student.exam_results ? "Edit Exam Scores" : "Enter Exam Scores"}
             </Link>
           </RoleGate>
@@ -385,7 +387,8 @@ export default function StudentDetailPage() {
             <p className="text-sm text-muted-foreground">No interview recorded yet.</p>
           )}
           <RoleGate capability="enterInterviewScores">
-            <Link href={`/students/${student.id}/interview`} className={buttonVariants({ size: "sm", variant: "outline" })}>
+            <Link href={`/students/${student.id}/interview`} className={buttonVariants({ className: "w-full gap-1.5 sm:w-auto" })}>
+              <Pencil className="size-4" />
               {student.interviews ? "Edit Interview" : "Enter Interview"}
             </Link>
           </RoleGate>
@@ -427,7 +430,11 @@ export default function StudentDetailPage() {
             ))
           )}
           <RoleGate capability="enterHomeVisitData">
-            <Link href={`/students/${student.id}/social-form`} className={buttonVariants({ size: "sm", variant: "outline" })}>
+            <Link
+              href={`/students/${student.id}/social-form`}
+              className={buttonVariants({ className: "w-full gap-1.5 sm:w-auto" })}
+            >
+              <Pencil className="size-4" />
               {student.social_assessments.length === 0 ? "Enter Social Form" : "Edit Social Form"}
             </Link>
           </RoleGate>

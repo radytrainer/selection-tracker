@@ -415,7 +415,7 @@ export function SocialForm({
               style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
             />
           </div>
-          <div className="-mx-1 flex gap-1 overflow-x-auto pb-0.5">
+          <div className="scrollbar-hide -mx-1 flex gap-1 overflow-x-auto pb-0.5">
             {STEPS.map((s, i) => {
               const progress = stepProgress[i];
               const isDone = progress ? progress.answered === progress.total : null;
