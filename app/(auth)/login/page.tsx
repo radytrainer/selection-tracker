@@ -64,7 +64,18 @@ export default function LoginPage() {
   async function onSubmit(values: LoginValues) {
     setIsSubmitting(true);
     try {
-      await signInWithEmailAndPassword(getFirebaseAuth(), values.email, values.password);
+      const credential = await signInWithEmailAndPassword(getFirebaseAuth(), values.email, values.password);
+      // useAuth()'s onIdTokenChanged listener also writes this cookie, but
+      // fire-and-forget — navigating before it lands races the middleware's
+      // cookie check on the very first sign-in in a browser with no prior
+      // session, bouncing straight back to /login. Await our own write here
+      // so the cookie is guaranteed to exist before we navigate.
+      const idToken = await credential.user.getIdToken();
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
       goToDashboard();
     } catch {
       toast.error("Sign in failed. Check your email and password.");
