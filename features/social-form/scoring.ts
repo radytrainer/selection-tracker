@@ -94,6 +94,13 @@ export const CATEGORY_LABELS: Record<SocialFormCategory, string> = {
   relatively_well_off: "Relatively Well-off",
 };
 
+export const CATEGORY_BADGE_CLASSES: Record<SocialFormCategory, string> = {
+  very_poor: "bg-red-100 text-red-700",
+  poor: "bg-amber-100 text-amber-700",
+  medium: "bg-blue-100 text-blue-700",
+  relatively_well_off: "bg-green-100 text-green-700",
+};
+
 function points<T extends string>(map: Record<T, number>, value: T | null | undefined): number {
   return value != null ? map[value] : 0;
 }

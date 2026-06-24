@@ -20,6 +20,7 @@ import {
 import { socialFormSchema, type SocialFormValues } from "@/features/social-form/schema";
 import {
   ACADEMIC_RANK_POINTS,
+  CATEGORY_BADGE_CLASSES,
   CATEGORY_LABELS,
   DEBT_POINTS,
   DEPENDENTS_POINTS,
@@ -39,7 +40,6 @@ import {
   SCHOOL_ATTENDANCE_POINTS,
   WATER_ACCESS_POINTS,
   computeSocialFormScore,
-  type SocialFormCategory,
 } from "@/features/social-form/scoring";
 import { ChoiceGroup } from "@/components/forms/ChoiceGroup";
 import { Button } from "@/components/ui/button";
@@ -184,13 +184,6 @@ const STEP_FIELDS: (keyof SocialFormValues)[][] = [
   ["husbandry_band"],
   [],
 ];
-
-const CATEGORY_BADGE_CLASSES: Record<SocialFormCategory, string> = {
-  very_poor: "bg-red-100 text-red-700",
-  poor: "bg-amber-100 text-amber-700",
-  medium: "bg-blue-100 text-blue-700",
-  relatively_well_off: "bg-green-100 text-green-700",
-};
 
 function SectionHeading({ icon: Icon, title, hint }: { icon: LucideIcon; title: string; hint?: string }) {
   return (

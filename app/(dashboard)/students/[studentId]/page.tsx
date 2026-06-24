@@ -4,9 +4,24 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import {
+  Award,
+  Check,
+  FileText,
+  FolderOpen,
+  GraduationCap,
+  HeartHandshake,
+  Languages,
+  Mic,
+  Send,
+  User,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import { getStudent, type StudentDetail } from "@/services/studentService";
 import { sendToCommittee } from "@/services/committeeService";
-import { CATEGORY_LABELS } from "@/features/social-form/scoring";
+import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS } from "@/features/social-form/scoring";
+import { STUDENT_STATUSES } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -19,6 +34,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { cn } from "@/lib/utils";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   strongly_recommend: "Strongly Recommend",
@@ -26,6 +42,124 @@ const RECOMMENDATION_LABELS: Record<string, string> = {
   neutral: "Neutral",
   not_recommend: "Do Not Recommend",
 };
+
+const STATUS_BADGE_CLASSES: Record<string, string> = {
+  registered: "bg-muted text-muted-foreground",
+  exam_completed: "bg-blue-100 text-blue-700",
+  interview_completed: "bg-blue-100 text-blue-700",
+  home_visit_completed: "bg-blue-100 text-blue-700",
+  committee_review: "bg-violet-100 text-violet-700",
+  selected: "bg-green-100 text-green-700",
+  waitlisted: "bg-amber-100 text-amber-700",
+  rejected: "bg-red-100 text-red-700",
+  dropped_out: "bg-muted text-muted-foreground",
+};
+
+const PIPELINE_STAGES: { status: string; label: string }[] = [
+  { status: "registered", label: "Registered" },
+  { status: "exam_completed", label: "Exam" },
+  { status: "interview_completed", label: "Interview" },
+  { status: "home_visit_completed", label: "Home Visit" },
+  { status: "committee_review", label: "Committee" },
+];
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn("text-right font-medium", value === "—" && "font-normal text-muted-foreground/70")}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function SectionCard({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Icon className="size-4 text-primary" />
+          <CardTitle>{title}</CardTitle>
+        </div>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="divide-y">{children}</CardContent>
+    </Card>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, sub }: { icon: LucideIcon; label: string; value: string; sub?: string }) {
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-3 py-4">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <Icon className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-lg font-semibold leading-tight">{value}</p>
+          {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PipelineStepper({ status }: { status: string }) {
+  const statusIndex = STUDENT_STATUSES.indexOf(status as (typeof STUDENT_STATUSES)[number]);
+  const committeeIndex = STUDENT_STATUSES.indexOf("committee_review");
+  const isTerminal = statusIndex > committeeIndex;
+  const reachedIndex = isTerminal ? committeeIndex : statusIndex;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center overflow-x-auto pb-1">
+        {PIPELINE_STAGES.map((stage, i) => {
+          const isCompleted = i < reachedIndex || (i === reachedIndex && isTerminal);
+          const isCurrent = i === reachedIndex && !isTerminal;
+          return (
+            <div key={stage.status} className="flex shrink-0 items-center last:flex-none">
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className={cn(
+                    "flex size-7 items-center justify-center rounded-full border-2 text-xs font-medium",
+                    isCompleted && "border-primary bg-primary text-primary-foreground",
+                    isCurrent && "border-primary bg-primary/10 text-primary",
+                    !isCompleted && !isCurrent && "border-muted-foreground/25 text-muted-foreground/60",
+                  )}
+                >
+                  {isCompleted ? <Check className="size-3.5" strokeWidth={3} /> : i + 1}
+                </div>
+                <span
+                  className={cn(
+                    "w-16 text-center text-[11px] leading-tight",
+                    isCurrent ? "font-medium text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {stage.label}
+                </span>
+              </div>
+              {i < PIPELINE_STAGES.length - 1 && (
+                <div className={cn("mb-4 h-0.5 w-6 shrink-0 sm:w-12", isCompleted ? "bg-primary" : "bg-muted-foreground/20")} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function StudentDetailPage() {
   const params = useParams<{ studentId: string }>();
@@ -61,7 +195,8 @@ export default function StudentDetailPage() {
   if (loading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-10 w-full" />
         <Skeleton className="h-48 w-full" />
       </div>
     );
@@ -71,181 +206,245 @@ export default function StudentDetailPage() {
     return <p className="text-sm text-muted-foreground">Student not found.</p>;
   }
 
+  const initials = `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase();
+  const latestAssessment = student.social_assessments[student.social_assessments.length - 1] ?? null;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">
-            {student.first_name} {student.last_name}
-          </h1>
-          <p className="text-sm text-muted-foreground">{student.student_code}</p>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary">
+            {initials || <User className="size-5" />}
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold sm:text-2xl">
+              {student.first_name} {student.last_name}
+            </h1>
+            <p className="text-sm text-muted-foreground">{student.student_code}</p>
+            <Badge className={cn("mt-1.5", STATUS_BADGE_CLASSES[student.status] ?? "bg-muted text-muted-foreground")}>
+              {student.status.replace(/_/g, " ")}
+            </Badge>
+          </div>
         </div>
-        <Badge>{student.status.replace(/_/g, " ")}</Badge>
+        {student.status === "home_visit_completed" && (
+          <RoleGate capability="createEditStudents">
+            <Button disabled={sendingToCommittee} onClick={handleSendToCommittee} className="gap-1.5">
+              <Send className="size-4" />
+              {sendingToCommittee ? "Sending..." : "Send to Committee"}
+            </Button>
+          </RoleGate>
+        )}
       </div>
 
+      <Card>
+        <CardContent className="py-4">
+          <PipelineStepper status={student.status} />
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="exam">Exam</TabsTrigger>
-          <TabsTrigger value="interview">Interview</TabsTrigger>
-          <TabsTrigger value="social-form">Social Form</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-        </TabsList>
+        <div className="-mx-1 overflow-x-auto px-1">
+          <TabsList>
+            <TabsTrigger value="overview" className="gap-1.5">
+              <User className="size-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="exam" className="gap-1.5">
+              <FileText className="size-4" />
+              Exam
+            </TabsTrigger>
+            <TabsTrigger value="interview" className="gap-1.5">
+              <Mic className="size-4" />
+              Interview
+            </TabsTrigger>
+            <TabsTrigger value="social-form" className="gap-1.5">
+              <HeartHandshake className="size-4" />
+              Social Form
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="gap-1.5">
+              <FolderOpen className="size-4" />
+              Documents
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="overview" className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal</CardTitle>
-              <CardDescription>Demographics and contact</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              <p>Gender: <span className="capitalize">{student.gender}</span></p>
-              <p>Date of Birth: {student.dob}</p>
-              <p>Phone: {student.phone ?? "—"}</p>
-              <p>
-                Location:{" "}
-                {[
-                  student.village_name,
-                  student.commune_name,
-                  student.district_name,
-                  student.provinces?.name_en,
-                ]
+        <TabsContent value="overview" className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SectionCard icon={User} title="Personal" description="Demographics and contact">
+            <Field label="Gender" value={student.gender ? student.gender[0].toUpperCase() + student.gender.slice(1) : "—"} />
+            <Field label="Date of Birth" value={student.dob ?? "—"} />
+            <Field label="Phone" value={student.phone ?? "—"} />
+            <Field
+              label="Location"
+              value={
+                [student.village_name, student.commune_name, student.district_name, student.provinces?.name_en]
                   .filter(Boolean)
-                  .join(", ") || "—"}
-              </p>
-            </CardContent>
-          </Card>
+                  .join(", ") || "—"
+              }
+            />
+          </SectionCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Academic</CardTitle>
-              <CardDescription>School and performance</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              <p>School: {student.school_partners?.school_name ?? "—"}</p>
-              <p>Grade: {student.grade ?? "—"}</p>
-              <p>GPA: {student.gpa ?? "—"}</p>
-              <p>English Level: {student.english_level ?? "—"}</p>
-            </CardContent>
-          </Card>
+          <SectionCard icon={GraduationCap} title="Academic" description="School and performance">
+            <Field label="School" value={student.school_partners?.school_name ?? "—"} />
+            <Field label="Grade" value={student.grade ?? "—"} />
+            <Field label="GPA" value={student.gpa != null ? String(student.gpa) : "—"} />
+            <Field label="English Level" value={student.english_level ?? "—"} />
+          </SectionCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Family</CardTitle>
-              <CardDescription>Household context</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              <p>Father: {student.father_name ?? "—"}</p>
-              <p>Mother: {student.mother_name ?? "—"}</p>
-              <p>Occupation: {student.parent_occupation ?? "—"}</p>
-              <p>Monthly Income: {student.family_income_monthly ?? "—"}</p>
-              <p>Siblings: {student.siblings_count ?? "—"}</p>
-            </CardContent>
-          </Card>
+          <SectionCard icon={UsersRound} title="Family" description="Household context">
+            <Field label="Father" value={student.father_name ?? "—"} />
+            <Field label="Mother" value={student.mother_name ?? "—"} />
+            <Field label="Occupation" value={student.parent_occupation ?? "—"} />
+            <Field
+              label="Monthly Income"
+              value={student.family_income_monthly != null ? `$${student.family_income_monthly}` : "—"}
+            />
+            <Field label="Siblings" value={student.siblings_count != null ? String(student.siblings_count) : "—"} />
+          </SectionCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Pipeline</CardTitle>
-              <CardDescription>Stage completion</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p>Exam: {student.exam_results ? "Completed" : "Pending"}</p>
-              <p>Interview: {student.interviews ? "Completed" : "Pending"}</p>
-              <p>Home Visit: {student.social_assessments?.length ? "Completed" : "Pending"}</p>
-              <p>Committee Decision: {student.committee_decisions?.decision ?? "Pending"}</p>
-              {student.status === "home_visit_completed" && (
-                <RoleGate capability="createEditStudents">
-                  <Button size="sm" disabled={sendingToCommittee} onClick={handleSendToCommittee}>
-                    {sendingToCommittee ? "Sending..." : "Send to Committee"}
-                  </Button>
-                </RoleGate>
-              )}
-            </CardContent>
-          </Card>
+          <SectionCard icon={HeartHandshake} title="Social Assessment" description="Latest home visit result">
+            {latestAssessment ? (
+              <>
+                <div className="flex items-center justify-between py-1.5 text-sm">
+                  <span className="text-muted-foreground">Category</span>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      CATEGORY_BADGE_CLASSES[latestAssessment.category],
+                    )}
+                  >
+                    {CATEGORY_LABELS[latestAssessment.category]}
+                  </span>
+                </div>
+                <Field label="Final Score" value={String(latestAssessment.final_score)} />
+                <Field label="Poverty Certificate" value={latestAssessment.poverty_certificate || "—"} />
+              </>
+            ) : (
+              <p className="py-1.5 text-sm text-muted-foreground">No social form recorded yet.</p>
+            )}
+          </SectionCard>
         </TabsContent>
 
-        <TabsContent value="exam" className="max-w-md space-y-3">
+        <TabsContent value="exam" className="mt-4 space-y-4">
           {student.exam_results ? (
-            <div className="space-y-1 text-sm">
-              <p>Math: {student.exam_results.math_score}</p>
-              <p>English: {student.exam_results.english_score}</p>
-              <p>Logic: {student.exam_results.logic_score}</p>
-              <p>Computer: {student.exam_results.computer_score}</p>
-              <p>Total: {student.exam_results.total_score} / 400</p>
-              <p className="capitalize">Result: {student.exam_results.pass_status ?? "—"}</p>
-              <p>Rank in cycle: {student.exam_results.rank_in_cycle ?? "—"}</p>
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatCard icon={Award} label="Math" value={String(student.exam_results.math_score)} />
+                <StatCard icon={Languages} label="English" value={String(student.exam_results.english_score)} />
+                <StatCard icon={GraduationCap} label="Logic" value={String(student.exam_results.logic_score)} />
+                <StatCard icon={FileText} label="Computer" value={String(student.exam_results.computer_score)} />
+              </div>
+              <SectionCard icon={FileText} title="Result" description="Overall exam outcome">
+                <Field label="Total Score" value={`${student.exam_results.total_score} / 400`} />
+                <Field
+                  label="Result"
+                  value={
+                    student.exam_results.pass_status
+                      ? student.exam_results.pass_status[0].toUpperCase() + student.exam_results.pass_status.slice(1)
+                      : "—"
+                  }
+                />
+                <Field label="Rank in Cycle" value={student.exam_results.rank_in_cycle != null ? String(student.exam_results.rank_in_cycle) : "—"} />
+              </SectionCard>
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">No exam scores entered yet.</p>
           )}
           <RoleGate capability="enterExamScores">
-            <Link
-              href={`/students/${student.id}/exam`}
-              className={buttonVariants({ size: "sm", variant: "outline" })}
-            >
+            <Link href={`/students/${student.id}/exam`} className={buttonVariants({ size: "sm", variant: "outline" })}>
               {student.exam_results ? "Edit Exam Scores" : "Enter Exam Scores"}
             </Link>
           </RoleGate>
         </TabsContent>
 
-        <TabsContent value="interview" className="max-w-md space-y-3">
+        <TabsContent value="interview" className="mt-4 space-y-4">
           {student.interviews ? (
-            <div className="space-y-1 text-sm">
-              <p>Communication: {student.interviews.communication_score}/5</p>
-              <p>Leadership: {student.interviews.leadership_score}/5</p>
-              <p>Motivation: {student.interviews.motivation_score}/5</p>
-              <p>Confidence: {student.interviews.confidence_score}/5</p>
-              <p>Critical Thinking: {student.interviews.critical_thinking_score}/5</p>
-              <p>
-                Recommendation:{" "}
-                {student.interviews.recommendation
-                  ? RECOMMENDATION_LABELS[student.interviews.recommendation]
-                  : "—"}
-              </p>
-              {student.interviews.comments && <p>Comments: {student.interviews.comments}</p>}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                <StatCard icon={Mic} label="Communication" value={`${student.interviews.communication_score}/5`} />
+                <StatCard icon={UsersRound} label="Leadership" value={`${student.interviews.leadership_score}/5`} />
+                <StatCard icon={HeartHandshake} label="Motivation" value={`${student.interviews.motivation_score}/5`} />
+                <StatCard icon={User} label="Confidence" value={`${student.interviews.confidence_score}/5`} />
+                <StatCard icon={GraduationCap} label="Critical Thinking" value={`${student.interviews.critical_thinking_score}/5`} />
+              </div>
+              <SectionCard icon={Mic} title="Recommendation" description="Interviewer's overall assessment">
+                <Field
+                  label="Recommendation"
+                  value={
+                    student.interviews.recommendation ? RECOMMENDATION_LABELS[student.interviews.recommendation] : "—"
+                  }
+                />
+                {student.interviews.comments && (
+                  <div className="py-1.5 text-sm">
+                    <p className="text-muted-foreground">Comments</p>
+                    <p className="mt-1">{student.interviews.comments}</p>
+                  </div>
+                )}
+              </SectionCard>
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">No interview recorded yet.</p>
           )}
           <RoleGate capability="enterInterviewScores">
-            <Link
-              href={`/students/${student.id}/interview`}
-              className={buttonVariants({ size: "sm", variant: "outline" })}
-            >
+            <Link href={`/students/${student.id}/interview`} className={buttonVariants({ size: "sm", variant: "outline" })}>
               {student.interviews ? "Edit Interview" : "Enter Interview"}
             </Link>
           </RoleGate>
         </TabsContent>
 
-        <TabsContent value="social-form" className="max-w-md space-y-4">
+        <TabsContent value="social-form" className="mt-4 space-y-4">
           {student.social_assessments.length === 0 ? (
             <p className="text-sm text-muted-foreground">No social form recorded yet.</p>
           ) : (
             student.social_assessments.map((assessment) => (
-              <div key={assessment.id} className="space-y-1 border-b pb-3 text-sm last:border-0">
-                <p className="font-medium">Visit #{assessment.visit_number}</p>
-                <p>Final Score: {assessment.final_score}</p>
-                <p>Category: {CATEGORY_LABELS[assessment.category]}</p>
-                <p>Housing: {assessment.housing_type_band?.replace(/_/g, " ") ?? "—"}</p>
-                <p>Monthly Income Band: {assessment.income_band?.replace(/_/g, "-") ?? "—"}</p>
-                <p>Poverty Certificate: {assessment.poverty_certificate || "—"}</p>
-                {assessment.visitor_comments && <p>Comments: {assessment.visitor_comments}</p>}
-              </div>
+              <SectionCard
+                key={assessment.id}
+                icon={HeartHandshake}
+                title={`Visit #${assessment.visit_number}`}
+                description="Home visit social assessment"
+              >
+                <div className="flex items-center justify-between py-1.5 text-sm">
+                  <span className="text-muted-foreground">Category</span>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      CATEGORY_BADGE_CLASSES[assessment.category],
+                    )}
+                  >
+                    {CATEGORY_LABELS[assessment.category]}
+                  </span>
+                </div>
+                <Field label="Final Score" value={String(assessment.final_score)} />
+                <Field label="Housing" value={assessment.housing_type_band?.replace(/_/g, " ") ?? "—"} />
+                <Field label="Monthly Income Band" value={assessment.income_band?.replace(/_/g, "-") ?? "—"} />
+                <Field label="Poverty Certificate" value={assessment.poverty_certificate || "—"} />
+                {assessment.visitor_comments && (
+                  <div className="py-1.5 text-sm">
+                    <p className="text-muted-foreground">Comments</p>
+                    <p className="mt-1">{assessment.visitor_comments}</p>
+                  </div>
+                )}
+              </SectionCard>
             ))
           )}
           <RoleGate capability="enterHomeVisitData">
-            <Link
-              href={`/students/${student.id}/social-form`}
-              className={buttonVariants({ size: "sm", variant: "outline" })}
-            >
+            <Link href={`/students/${student.id}/social-form`} className={buttonVariants({ size: "sm", variant: "outline" })}>
               {student.social_assessments.length === 0 ? "Enter Social Form" : "Edit Social Form"}
             </Link>
           </RoleGate>
         </TabsContent>
-        <TabsContent value="documents">
-          <p className="text-sm text-muted-foreground">
-            Document upload/preview — see docs/07-ui-pages.md §4.1 (next implementation pass).
-          </p>
+
+        <TabsContent value="documents" className="mt-4">
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <FolderOpen className="size-5 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium">No documents yet</p>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                Document upload/preview — see docs/07-ui-pages.md §4.1 (next implementation pass).
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
