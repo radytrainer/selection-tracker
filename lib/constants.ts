@@ -28,6 +28,11 @@ export const STUDENT_STATUSES = [
 
 export type StudentStatus = (typeof STUDENT_STATUSES)[number];
 
+/** Moves a student's status forward only — never regresses progress already made (e.g. re-saving exam scores after the interview is done shouldn't reset status back to exam_completed). */
+export function advanceStatus(current: StudentStatus, target: StudentStatus): StudentStatus {
+  return STUDENT_STATUSES.indexOf(target) > STUDENT_STATUSES.indexOf(current) ? target : current;
+}
+
 export const OUTREACH_STATUSES = [
   "not_contacted",
   "contacted",

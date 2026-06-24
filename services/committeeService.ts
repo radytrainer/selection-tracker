@@ -107,6 +107,13 @@ export async function approveCommitteeDecision(decisionId: string, approve: bool
   if (error) throw error;
 }
 
+/** Manual hand-off after the home visit is done — the case is "presented" to the committee. */
+export async function sendToCommittee(studentId: string) {
+  const supabase = createClient();
+  const { error } = await supabase.from("students").update({ status: "committee_review" }).eq("id", studentId);
+  if (error) throw error;
+}
+
 /** rated_by is filled server-side from the caller's own user row (see migration 0009), so it's never sent here. */
 export async function upsertCommitteeRating(input: {
   studentId: string;

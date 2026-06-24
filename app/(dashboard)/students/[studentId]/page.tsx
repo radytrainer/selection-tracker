@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import { getStudent, type StudentDetail } from "@/services/studentService";
+import { sendToCommittee } from "@/services/committeeService";
 import {
   Card,
   CardContent,
@@ -12,20 +14,48 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RoleGate } from "@/components/layout/RoleGate";
+
+const RECOMMENDATION_LABELS: Record<string, string> = {
+  strongly_recommend: "Strongly Recommend",
+  recommend: "Recommend",
+  neutral: "Neutral",
+  not_recommend: "Do Not Recommend",
+};
 
 export default function StudentDetailPage() {
   const params = useParams<{ studentId: string }>();
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sendingToCommittee, setSendingToCommittee] = useState(false);
 
-  useEffect(() => {
-    getStudent(params.studentId)
+  const load = useCallback(() => {
+    return getStudent(params.studentId)
       .then(setStudent)
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load student"))
       .finally(() => setLoading(false));
   }, [params.studentId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function handleSendToCommittee() {
+    if (!student) return;
+    setSendingToCommittee(true);
+    try {
+      await sendToCommittee(student.id);
+      toast.success("Case sent to the committee");
+      load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to send to committee");
+    } finally {
+      setSendingToCommittee(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -117,29 +147,103 @@ export default function StudentDetailPage() {
               <CardTitle>Pipeline</CardTitle>
               <CardDescription>Stage completion</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-1 text-sm">
+            <CardContent className="space-y-2 text-sm">
               <p>Exam: {student.exam_results ? "Completed" : "Pending"}</p>
               <p>Interview: {student.interviews ? "Completed" : "Pending"}</p>
               <p>Home Visit: {student.home_visits?.length ? "Completed" : "Pending"}</p>
               <p>Committee Decision: {student.committee_decisions?.decision ?? "Pending"}</p>
+              {student.status === "home_visit_completed" && (
+                <RoleGate capability="createEditStudents">
+                  <Button size="sm" disabled={sendingToCommittee} onClick={handleSendToCommittee}>
+                    {sendingToCommittee ? "Sending..." : "Send to Committee"}
+                  </Button>
+                </RoleGate>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="exam">
-          <p className="text-sm text-muted-foreground">
-            Exam score entry form — see docs/07-ui-pages.md §4.2 (next implementation pass).
-          </p>
+        <TabsContent value="exam" className="max-w-md space-y-3">
+          {student.exam_results ? (
+            <div className="space-y-1 text-sm">
+              <p>Math: {student.exam_results.math_score}</p>
+              <p>English: {student.exam_results.english_score}</p>
+              <p>Logic: {student.exam_results.logic_score}</p>
+              <p>Computer: {student.exam_results.computer_score}</p>
+              <p>Total: {student.exam_results.total_score} / 400</p>
+              <p className="capitalize">Result: {student.exam_results.pass_status ?? "—"}</p>
+              <p>Rank in cycle: {student.exam_results.rank_in_cycle ?? "—"}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No exam scores entered yet.</p>
+          )}
+          <RoleGate capability="enterExamScores">
+            <Link
+              href={`/students/${student.id}/exam`}
+              className={buttonVariants({ size: "sm", variant: "outline" })}
+            >
+              {student.exam_results ? "Edit Exam Scores" : "Enter Exam Scores"}
+            </Link>
+          </RoleGate>
         </TabsContent>
-        <TabsContent value="interview">
-          <p className="text-sm text-muted-foreground">
-            Interview scoring form — see docs/07-ui-pages.md §4.3 (next implementation pass).
-          </p>
+
+        <TabsContent value="interview" className="max-w-md space-y-3">
+          {student.interviews ? (
+            <div className="space-y-1 text-sm">
+              <p>Communication: {student.interviews.communication_score}/5</p>
+              <p>Leadership: {student.interviews.leadership_score}/5</p>
+              <p>Motivation: {student.interviews.motivation_score}/5</p>
+              <p>Confidence: {student.interviews.confidence_score}/5</p>
+              <p>Critical Thinking: {student.interviews.critical_thinking_score}/5</p>
+              <p>
+                Recommendation:{" "}
+                {student.interviews.recommendation
+                  ? RECOMMENDATION_LABELS[student.interviews.recommendation]
+                  : "—"}
+              </p>
+              {student.interviews.comments && <p>Comments: {student.interviews.comments}</p>}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No interview recorded yet.</p>
+          )}
+          <RoleGate capability="enterInterviewScores">
+            <Link
+              href={`/students/${student.id}/interview`}
+              className={buttonVariants({ size: "sm", variant: "outline" })}
+            >
+              {student.interviews ? "Edit Interview" : "Enter Interview"}
+            </Link>
+          </RoleGate>
         </TabsContent>
-        <TabsContent value="home-visit">
-          <p className="text-sm text-muted-foreground">
-            Home visit form — see docs/07-ui-pages.md §4.4 (next implementation pass).
-          </p>
+
+        <TabsContent value="home-visit" className="max-w-md space-y-4">
+          {student.home_visits.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No home visit recorded yet.</p>
+          ) : (
+            student.home_visits.map((visit) => (
+              <div key={visit.id} className="space-y-1 border-b pb-3 text-sm last:border-0">
+                <p className="font-medium">Visit #{visit.visit_number}</p>
+                <p>House Type: {visit.house_type ?? "—"}</p>
+                <p>Family Income: {visit.family_income != null ? `$${visit.family_income}/mo` : "—"}</p>
+                <p>Transportation: {visit.transportation ?? "—"}</p>
+                <p>Electricity: {visit.electricity_access ? "Yes" : "No"}</p>
+                <p>Internet: {visit.internet_access ? "Yes" : "No"}</p>
+                {visit.family_condition_notes && <p>Notes: {visit.family_condition_notes}</p>}
+                <p>
+                  Recommendation:{" "}
+                  {visit.recommendation ? RECOMMENDATION_LABELS[visit.recommendation] : "—"}
+                </p>
+              </div>
+            ))
+          )}
+          <RoleGate capability="enterHomeVisitData">
+            <Link
+              href={`/students/${student.id}/home-visit`}
+              className={buttonVariants({ size: "sm", variant: "outline" })}
+            >
+              {student.home_visits.length === 0 ? "Enter Home Visit" : "Add Re-Visit"}
+            </Link>
+          </RoleGate>
         </TabsContent>
         <TabsContent value="documents">
           <p className="text-sm text-muted-foreground">

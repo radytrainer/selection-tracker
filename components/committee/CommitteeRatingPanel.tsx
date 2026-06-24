@@ -9,7 +9,7 @@ import {
 } from "@/lib/constants";
 import { upsertCommitteeRating } from "@/services/committeeService";
 import type { Database } from "@/types/database.types";
-import { StarRating } from "@/components/committee/StarRating";
+import { StarRating } from "@/components/ui/star-rating";
 
 type CommitteeRatingRow = Database["public"]["Tables"]["committee_ratings"]["Row"];
 
