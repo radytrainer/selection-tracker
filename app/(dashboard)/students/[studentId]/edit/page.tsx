@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { StudentForm } from "@/components/forms/StudentForm";
 import { getStudent, updateStudent, type StudentDetail } from "@/services/studentService";
+import { getSignedStudentDocumentUrl, pickLatestPhotoPath, uploadStudentPhoto } from "@/lib/supabase/storage";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StudentFormValues } from "@/features/students/schema";
 
@@ -12,16 +13,21 @@ export default function EditStudentPage() {
   const params = useParams<{ studentId: string }>();
   const router = useRouter();
   const [student, setStudent] = useState<StudentDetail | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getStudent(params.studentId)
-      .then(setStudent)
+      .then(async (data) => {
+        setStudent(data);
+        const photoPath = pickLatestPhotoPath(data.student_documents);
+        if (photoPath) setPhotoUrl(await getSignedStudentDocumentUrl(photoPath));
+      })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load student"))
       .finally(() => setLoading(false));
   }, [params.studentId]);
 
-  async function handleSubmit(values: StudentFormValues) {
+  async function handleSubmit(values: StudentFormValues, photoFile: File | null) {
     await updateStudent(params.studentId, {
       first_name: values.first_name,
       last_name: values.last_name,
@@ -45,6 +51,14 @@ export default function EditStudentPage() {
         : null,
       siblings_count: values.siblings_count ? Number(values.siblings_count) : null,
     });
+
+    if (photoFile) {
+      try {
+        await uploadStudentPhoto(photoFile, params.studentId);
+      } catch {
+        toast.error("Student updated, but the photo upload failed. Try again from this page.");
+      }
+    }
 
     toast.success("Student updated");
     router.push(`/students/${params.studentId}`);
@@ -94,6 +108,7 @@ export default function EditStudentPage() {
             student.family_income_monthly != null ? String(student.family_income_monthly) : "",
           siblings_count: student.siblings_count != null ? String(student.siblings_count) : "",
         }}
+        defaultPhotoUrl={photoUrl}
         onSubmit={handleSubmit}
         submitLabel="Save Changes"
       />

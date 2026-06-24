@@ -5,12 +5,13 @@ import { toast } from "sonner";
 import { StudentForm } from "@/components/forms/StudentForm";
 import { createStudent, generateStudentCode } from "@/services/studentService";
 import { getActiveCycle } from "@/services/lookupService";
+import { uploadStudentPhoto } from "@/lib/supabase/storage";
 import type { StudentFormValues } from "@/features/students/schema";
 
 export default function NewStudentPage() {
   const router = useRouter();
 
-  async function handleSubmit(values: StudentFormValues) {
+  async function handleSubmit(values: StudentFormValues, photoFile: File | null) {
     const cycle = await getActiveCycle();
     if (!cycle) {
       toast.error("No active selection cycle found. Ask a Program Manager to create one.");
@@ -44,6 +45,14 @@ export default function NewStudentPage() {
         : null,
       siblings_count: values.siblings_count ? Number(values.siblings_count) : null,
     });
+
+    if (photoFile) {
+      try {
+        await uploadStudentPhoto(photoFile, student.id);
+      } catch {
+        toast.error("Student created, but the photo upload failed. Add it from the student's profile.");
+      }
+    }
 
     toast.success(`Student ${student.student_code} created`);
     router.push(`/students/${student.id}`);

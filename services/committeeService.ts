@@ -21,6 +21,7 @@ export type CommitteeQueueItem = {
   exam_results: { total_score: number; rank_in_cycle: number | null; pass_status: string | null } | null;
   interviews: { recommendation: string | null } | null;
   social_assessments: { final_score: number; category: string; visitor_comments: string | null }[];
+  student_documents: { doc_type: string; file_path: string; uploaded_at: string }[];
   committee_ratings: CommitteeRatingRow[];
 };
 
@@ -30,6 +31,7 @@ const QUEUE_SELECT = `
   exam_results(total_score, rank_in_cycle, pass_status),
   interviews(recommendation),
   social_assessments(final_score, category, visitor_comments),
+  student_documents(doc_type, file_path, uploaded_at),
   committee_ratings(*)
 `;
 
@@ -148,6 +150,7 @@ export type CommitteeDossier = {
     poverty_certificate: string | null;
     visitor_comments: string | null;
   }[];
+  student_documents: { doc_type: string; file_path: string; uploaded_at: string }[];
   committee_decisions: { decision: string | null; decision_date: string | null; approval_status: string } | null;
   committee_ratings: CommitteeRatingRow[];
 };
@@ -158,6 +161,7 @@ const DOSSIER_SELECT = `
   exam_results(math_score, english_score, logic_score, computer_score, total_score, rank_in_cycle, rank_in_province, pass_status),
   interviews(communication_score, leadership_score, motivation_score, confidence_score, critical_thinking_score, comments, recommendation),
   social_assessments(id, visit_number, housing_type_band, income_band, final_score, category, poverty_certificate, visitor_comments),
+  student_documents(doc_type, file_path, uploaded_at),
   committee_decisions(decision, decision_date, approval_status),
   committee_ratings(*)
 `;

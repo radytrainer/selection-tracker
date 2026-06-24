@@ -21,6 +21,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
 import { CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import { StudentAvatar } from "@/components/students/StudentAvatar";
+import { getSignedStudentDocumentUrls, pickLatestPhotoPath } from "@/lib/supabase/storage";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   strongly_recommend: "Strongly recommends",
@@ -39,15 +41,18 @@ function ratingSummary(student: CommitteeQueueItem) {
 export default function CommitteeQueuePage() {
   const [queue, setQueue] = useState<CommitteeQueueItem[]>([]);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     return Promise.all([listCommitteeQueue(), listPendingApprovals()])
-      .then(([q, a]) => {
+      .then(async ([q, a]) => {
         setQueue(q);
         setApprovals(a);
+        const photoPaths = q.map((s) => pickLatestPhotoPath(s.student_documents)).filter((p): p is string => !!p);
+        setPhotoUrls(await getSignedStudentDocumentUrls(photoPaths));
       })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load committee queue"))
       .finally(() => setLoading(false));
@@ -97,18 +102,28 @@ export default function CommitteeQueuePage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {queue.map((student) => {
                 const socialAssessment = student.social_assessments[0] ?? null;
+                const photoPath = pickLatestPhotoPath(student.student_documents);
+                const initials = `${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase();
 
                 return (
                   <Link key={student.id} href={`/committee/${student.id}`} className="block">
                     <Card className="h-full transition-colors hover:border-primary">
-                      <CardHeader>
-                        <CardTitle className="text-base hover:underline">
-                          {student.first_name} {student.last_name}
-                        </CardTitle>
-                        <CardDescription>
-                          {student.student_code} · {student.provinces?.name_en ?? "No province"} ·{" "}
-                          {student.school_partners?.school_name ?? "No school"}
-                        </CardDescription>
+                      <CardHeader className="flex flex-row items-start gap-3">
+                        <StudentAvatar
+                          photoPath={photoPath}
+                          signedUrl={photoPath ? photoUrls[photoPath] ?? null : null}
+                          initials={initials}
+                          size="size-10"
+                        />
+                        <div>
+                          <CardTitle className="text-base hover:underline">
+                            {student.first_name} {student.last_name}
+                          </CardTitle>
+                          <CardDescription>
+                            {student.student_code} · {student.provinces?.name_en ?? "No province"} ·{" "}
+                            {student.school_partners?.school_name ?? "No school"}
+                          </CardDescription>
+                        </div>
                       </CardHeader>
                       <CardContent className="space-y-2 text-xs text-muted-foreground">
                         <p>

@@ -29,6 +29,8 @@ import { ExamScoreChart } from "@/components/committee/ExamScoreChart";
 import { InterviewScoreChart } from "@/components/committee/InterviewScoreChart";
 import { RatingAverageChart } from "@/components/committee/RatingAverageChart";
 import { CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import { StudentAvatar } from "@/components/students/StudentAvatar";
+import { pickLatestPhotoPath } from "@/lib/supabase/storage";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   strongly_recommend: "Strongly Recommend",
@@ -90,23 +92,28 @@ export default function CommitteeDossierPage() {
   }
 
   const socialAssessment = student.social_assessments[0] ?? null;
+  const photoPath = pickLatestPhotoPath(student.student_documents);
+  const initials = `${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <Link href="/committee/queue" className="text-sm text-muted-foreground hover:underline">
-            ← Back to Committee Queue
-          </Link>
-          <h1 className="text-2xl font-semibold">
-            {student.first_name} {student.last_name}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {student.student_code} ·{" "}
-            <Link href={`/students/${student.id}`} className="hover:underline">
-              View full profile
+        <div className="flex items-center gap-3">
+          <StudentAvatar photoPath={photoPath} initials={initials} size="size-12" />
+          <div>
+            <Link href="/committee/queue" className="text-sm text-muted-foreground hover:underline">
+              ← Back to Committee Queue
             </Link>
-          </p>
+            <h1 className="text-2xl font-semibold">
+              {student.first_name} {student.last_name}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {student.student_code} ·{" "}
+              <Link href={`/students/${student.id}`} className="hover:underline">
+                View full profile
+              </Link>
+            </p>
+          </div>
         </div>
         <Badge>{student.status.replace(/_/g, " ")}</Badge>
       </div>

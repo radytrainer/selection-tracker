@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, User, X } from "lucide-react";
 import { studentFormSchema, type StudentFormValues } from "@/features/students/schema";
 import { listProvinces, listSchools } from "@/services/lookupService";
 import { listNgos } from "@/services/ngoService";
+import { validateStudentPhotoFile } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -83,11 +84,14 @@ const STEPS = [
 
 export function StudentForm({
   defaultValues,
+  defaultPhotoUrl,
   onSubmit,
   submitLabel = "Save Student",
 }: {
   defaultValues?: Partial<StudentFormValues>;
-  onSubmit: (values: StudentFormValues) => Promise<void>;
+  /** Signed URL for the student's current photo, if editing one that already has one. */
+  defaultPhotoUrl?: string | null;
+  onSubmit: (values: StudentFormValues, photoFile: File | null) => Promise<void>;
   submitLabel?: string;
 }) {
   const [provinces, setProvinces] = useState<LookupOption[]>([]);
@@ -95,6 +99,23 @@ export function StudentForm({
   const [ngos, setNgos] = useState<{ id: string; organization_name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(0);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(defaultPhotoUrl ?? null);
+
+  function handlePhotoSelect(file: File | null) {
+    if (!file) {
+      setPhotoFile(null);
+      setPhotoPreviewUrl(defaultPhotoUrl ?? null);
+      return;
+    }
+    const invalidReason = validateStudentPhotoFile(file);
+    if (invalidReason) {
+      toast.error(invalidReason);
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  }
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -127,7 +148,7 @@ export function StudentForm({
   async function handleSubmit(values: StudentFormValues) {
     setIsSubmitting(true);
     try {
-      await onSubmit(values);
+      await onSubmit(values, photoFile);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save student");
     } finally {
@@ -199,6 +220,32 @@ export function StudentForm({
 
         {step === 0 && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex items-center gap-4 sm:col-span-2">
+              {photoPreviewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- local object URL / signed URL, not a static asset
+                <img src={photoPreviewUrl} alt="" className="size-16 shrink-0 rounded-full object-cover" />
+              ) : (
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <User className="size-7" />
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <label className={cn(buttonVariants({ variant: "outline", size: "sm" }), "cursor-pointer")}>
+                  {photoPreviewUrl ? "Change Photo" : "Add Photo"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => handlePhotoSelect(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+                {photoPreviewUrl && (
+                  <Button type="button" variant="ghost" size="icon-sm" onClick={() => handlePhotoSelect(null)}>
+                    <X className="size-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
             <FormField
               control={form.control}
               name="first_name"

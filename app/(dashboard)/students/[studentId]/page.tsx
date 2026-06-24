@@ -23,6 +23,8 @@ import { getStudent, type StudentDetail } from "@/services/studentService";
 import { sendToCommittee } from "@/services/committeeService";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS } from "@/features/social-form/scoring";
 import { STUDENT_STATUSES } from "@/lib/constants";
+import { StudentAvatar } from "@/components/students/StudentAvatar";
+import { pickLatestPhotoPath } from "@/lib/supabase/storage";
 import {
   Card,
   CardContent,
@@ -209,14 +211,13 @@ export default function StudentDetailPage() {
 
   const initials = `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase();
   const latestAssessment = student.social_assessments[student.social_assessments.length - 1] ?? null;
+  const photoPath = pickLatestPhotoPath(student.student_documents);
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary">
-            {initials || <User className="size-5" />}
-          </div>
+          <StudentAvatar photoPath={photoPath} initials={initials} size="size-12" className="text-base" />
           <div>
             <h1 className="text-xl font-semibold sm:text-2xl">
               {student.first_name} {student.last_name}
