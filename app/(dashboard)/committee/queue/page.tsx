@@ -11,6 +11,10 @@ import {
   type CommitteeQueueItem,
   type PendingApproval,
 } from "@/services/committeeService";
+import { getMyProfile } from "@/services/userService";
+import { useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
+import { can } from "@/lib/rbac";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,10 +25,25 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { CommitteeRatingPanel } from "@/components/committee/CommitteeRatingPanel";
+
+const RECOMMENDATION_LABELS: Record<string, string> = {
+  strongly_recommend: "Strongly recommends",
+  recommend: "Recommends",
+  neutral: "Neutral",
+  not_recommend: "Does not recommend",
+};
+
+function formatUsd(value: number | null) {
+  return value != null ? `$${value.toLocaleString()}/mo` : "Not recorded";
+}
 
 export default function CommitteeQueuePage() {
+  const { user } = useAuth();
+  const { role } = useRole();
   const [queue, setQueue] = useState<CommitteeQueueItem[]>([]);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -42,6 +61,11 @@ export default function CommitteeQueuePage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!user) return;
+    getMyProfile(user.uid).then((profile) => setMyUserId(profile?.id ?? null));
+  }, [user]);
 
   async function handleDecision(student: CommitteeQueueItem, decision: "selected" | "waitlisted" | "rejected") {
     setBusyId(student.id);
@@ -93,46 +117,95 @@ export default function CommitteeQueuePage() {
           {queue.length === 0 ? (
             <p className="text-sm text-muted-foreground">No students waiting on a committee decision.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {queue.map((student) => (
-                <Card key={student.id}>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      <Link href={`/students/${student.id}`} className="hover:underline">
-                        {student.first_name} {student.last_name}
-                      </Link>
-                    </CardTitle>
-                    <CardDescription>
-                      {student.student_code} · {student.provinces?.name_en ?? "No province"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex gap-2">
-                    <Button
-                      size="sm"
-                      disabled={busyId === student.id}
-                      onClick={() => handleDecision(student, "selected")}
-                    >
-                      Select
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busyId === student.id}
-                      onClick={() => handleDecision(student, "waitlisted")}
-                    >
-                      Waitlist
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busyId === student.id}
-                      onClick={() => handleDecision(student, "rejected")}
-                    >
-                      Reject
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {queue.map((student) => {
+                const homeVisit = student.home_visits[0] ?? null;
+                const familyIncome = homeVisit?.family_income ?? student.family_income_monthly;
+
+                return (
+                  <Card key={student.id}>
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        <Link href={`/students/${student.id}`} className="hover:underline">
+                          {student.first_name} {student.last_name}
+                        </Link>
+                      </CardTitle>
+                      <CardDescription>
+                        {student.student_code} · {student.provinces?.name_en ?? "No province"} ·{" "}
+                        {student.school_partners?.school_name ?? "No school"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <p>
+                          Family income: <span className="text-foreground">{formatUsd(familyIncome)}</span>
+                        </p>
+                        <p>
+                          GPA: <span className="text-foreground">{student.gpa ?? "—"}</span>
+                        </p>
+                        <p>
+                          Exam:{" "}
+                          <span className="text-foreground">
+                            {student.exam_results
+                              ? `${student.exam_results.total_score} (rank ${student.exam_results.rank_in_cycle ?? "—"}, ${student.exam_results.pass_status})`
+                              : "Pending"}
+                          </span>
+                        </p>
+                        <p>
+                          Interview:{" "}
+                          <span className="text-foreground">
+                            {student.interviews?.recommendation
+                              ? RECOMMENDATION_LABELS[student.interviews.recommendation]
+                              : "Pending"}
+                          </span>
+                        </p>
+                        <p className="col-span-2">
+                          Home visit:{" "}
+                          <span className="text-foreground">
+                            {homeVisit?.recommendation ? RECOMMENDATION_LABELS[homeVisit.recommendation] : "Pending"}
+                          </span>
+                          {homeVisit?.family_condition_notes && ` — ${homeVisit.family_condition_notes}`}
+                        </p>
+                      </div>
+
+                      <CommitteeRatingPanel
+                        studentId={student.id}
+                        cycleId={student.cycle_id}
+                        ratings={student.committee_ratings}
+                        myUserId={myUserId}
+                        canRate={can(role, "recordCommitteeDecision")}
+                        onRated={load}
+                      />
+
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          disabled={busyId === student.id}
+                          onClick={() => handleDecision(student, "selected")}
+                        >
+                          Select
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busyId === student.id}
+                          onClick={() => handleDecision(student, "waitlisted")}
+                        >
+                          Waitlist
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busyId === student.id}
+                          onClick={() => handleDecision(student, "rejected")}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

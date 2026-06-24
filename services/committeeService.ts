@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
+import type { CommitteeRatingCriterion } from "@/lib/constants";
 
 type CommitteeDecisionInsert = Database["public"]["Tables"]["committee_decisions"]["Insert"];
+type CommitteeRatingRow = Database["public"]["Tables"]["committee_ratings"]["Row"];
 
 export type CommitteeQueueItem = {
   id: string;
@@ -10,12 +12,26 @@ export type CommitteeQueueItem = {
   last_name: string;
   gender: string;
   cycle_id: string;
+  gpa: number | null;
+  family_income_monthly: number | null;
   provinces: { name_en: string } | null;
   school_partners: { school_name: string } | null;
+  // exam_results/interviews have a unique constraint on student_id, so
+  // PostgREST embeds them as a single to-one object (or null).
+  exam_results: { total_score: number; rank_in_cycle: number | null; pass_status: string | null } | null;
+  interviews: { recommendation: string | null } | null;
+  home_visits: { family_income: number | null; family_condition_notes: string | null; recommendation: string | null }[];
+  committee_ratings: CommitteeRatingRow[];
 };
 
-const QUEUE_SELECT =
-  "id, student_code, first_name, last_name, gender, cycle_id, provinces(name_en), school_partners(school_name)";
+const QUEUE_SELECT = `
+  id, student_code, first_name, last_name, gender, cycle_id, gpa, family_income_monthly,
+  provinces(name_en), school_partners(school_name),
+  exam_results(total_score, rank_in_cycle, pass_status),
+  interviews(recommendation),
+  home_visits(family_income, family_condition_notes, recommendation),
+  committee_ratings(*)
+`;
 
 /** Students who've finished the pipeline but have no committee decision yet. */
 export async function listCommitteeQueue(cycleId?: string) {
@@ -88,5 +104,25 @@ export async function approveCommitteeDecision(decisionId: string, approve: bool
     .from("committee_decisions")
     .update({ approval_status: approve ? "approved" : "rejected" })
     .eq("id", decisionId);
+  if (error) throw error;
+}
+
+/** rated_by is filled server-side from the caller's own user row (see migration 0009), so it's never sent here. */
+export async function upsertCommitteeRating(input: {
+  studentId: string;
+  cycleId: string;
+  criterion: CommitteeRatingCriterion;
+  score: number;
+}) {
+  const supabase = createClient();
+  const { error } = await supabase.from("committee_ratings").upsert(
+    {
+      student_id: input.studentId,
+      cycle_id: input.cycleId,
+      criterion: input.criterion,
+      score: input.score,
+    },
+    { onConflict: "student_id,rated_by,criterion" },
+  );
   if (error) throw error;
 }

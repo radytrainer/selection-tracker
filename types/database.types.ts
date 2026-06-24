@@ -573,6 +573,30 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["committee_notes"]["Insert"]>;
         Relationships: [];
       };
+      committee_ratings: {
+        Row: {
+          id: string;
+          student_id: string;
+          cycle_id: string;
+          rated_by: string;
+          criterion: "financial_need" | "family_condition" | "academic_performance" | "interview_fit";
+          score: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          student_id: string;
+          cycle_id: string;
+          rated_by?: string;
+          criterion: "financial_need" | "family_condition" | "academic_performance" | "interview_fit";
+          score: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["committee_ratings"]["Insert"]>;
+        Relationships: [];
+      };
       ai_summaries: {
         Row: {
           id: string;
