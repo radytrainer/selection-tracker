@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { differenceInYears } from "date-fns";
+import { MapPin, Building2, HeartPulse } from "lucide-react";
 import {
   getCommitteeDossier,
   recordCommitteeDecision,
@@ -28,7 +30,9 @@ import { CommitteeRatingPanel } from "@/components/committee/CommitteeRatingPane
 import { ExamScoreChart } from "@/components/committee/ExamScoreChart";
 import { InterviewScoreChart } from "@/components/committee/InterviewScoreChart";
 import { RatingAverageChart } from "@/components/committee/RatingAverageChart";
-import { CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import { SocialFormSummary } from "@/components/committee/SocialFormSummary";
+import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import { HEALTH_OPTS, labelFor } from "@/features/social-form/labels";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { pickLatestPhotoPath } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
@@ -102,6 +106,10 @@ export default function CommitteeDossierPage() {
   const socialAssessment = student.social_assessments[0] ?? null;
   const photoPath = pickLatestPhotoPath(student.student_documents);
   const initials = `${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase();
+  const age = student.dob ? differenceInYears(new Date(), new Date(student.dob)) : null;
+  const address = [student.village_name, student.commune_name, student.district_name, student.provinces?.name_en]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="space-y-6">
@@ -130,7 +138,7 @@ export default function CommitteeDossierPage() {
         <Card>
           <CardHeader>
             <CardTitle>Profile</CardTitle>
-            <CardDescription>Summary</CardDescription>
+            <CardDescription>Student information</CardDescription>
           </CardHeader>
           <CardContent className="flex gap-4">
             <StudentAvatar
@@ -138,18 +146,45 @@ export default function CommitteeDossierPage() {
               initials={initials}
               shape="square"
               size="size-28 sm:size-32"
-              className="text-2xl"
+              className="text-2xl shrink-0"
             />
             <div className="space-y-1 text-sm">
-              <p>Gender: <span className="capitalize">{student.gender}</span></p>
-              <p>Province: {student.provinces?.name_en ?? "—"}</p>
-              <p>School: {student.school_partners?.school_name ?? "—"}</p>
-              <p>GPA: {student.gpa ?? "—"}</p>
               <p>
-                Social form:{" "}
-                {socialAssessment
-                  ? `${CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} (${socialAssessment.final_score})`
-                  : "—"}
+                <span className="capitalize">{student.gender}</span>
+                {age != null && <span> · {age} yrs old</span>}
+                {student.grade && <span> · {student.grade}</span>}
+              </p>
+              <p className="flex items-start gap-1.5 text-muted-foreground">
+                <MapPin className="mt-0.5 size-3.5 shrink-0" />
+                <span>{address || student.provinces?.name_en || "—"}</span>
+              </p>
+              <p>School: {student.school_partners?.school_name ?? "—"}</p>
+              {student.ngo_partners?.organization_name && (
+                <p className="flex items-center gap-1.5">
+                  <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+                  NGO: {student.ngo_partners.organization_name}
+                </p>
+              )}
+              <p>GPA: {student.gpa ?? "—"}</p>
+              {socialAssessment?.health_status && (
+                <p className="flex items-center gap-1.5">
+                  <HeartPulse className="size-3.5 shrink-0 text-muted-foreground" />
+                  Health: {labelFor(HEALTH_OPTS, socialAssessment.health_status)}
+                </p>
+              )}
+              <p className="pt-1">
+                {socialAssessment ? (
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
+                    )}
+                  >
+                    {socialAssessment.final_score} pts · {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">No social form yet</span>
+                )}
               </p>
             </div>
           </CardContent>
@@ -208,51 +243,46 @@ export default function CommitteeDossierPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Social Form</CardTitle>
-            <CardDescription>{student.social_assessments.length} visit(s) recorded</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {student.social_assessments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No social form yet.</p>
-            ) : (
-              student.social_assessments.map((assessment) => (
-                <div key={assessment.id} className="space-y-1 border-b pb-2 text-sm last:border-0">
-                  <p className="font-medium">Visit #{assessment.visit_number}</p>
-                  <p>Housing: {assessment.housing_type_band?.replace(/_/g, " ") ?? "—"}</p>
-                  <p>Income Band: {assessment.income_band?.replace(/_/g, "-") ?? "—"}</p>
-                  <p>
-                    Final Score: {assessment.final_score} ·{" "}
-                    {CATEGORY_LABELS[assessment.category as SocialFormCategory]}
-                  </p>
-                  <p>Poverty Certificate: {assessment.poverty_certificate || "—"}</p>
-                  {assessment.visitor_comments && <p>Notes: {assessment.visitor_comments}</p>}
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Social Form (Home Visit)</CardTitle>
+          <CardDescription>
+            {student.social_assessments.length === 0
+              ? "No visit recorded yet"
+              : `${student.social_assessments.length} visit(s) recorded`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {student.social_assessments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No social form yet.</p>
+          ) : (
+            student.social_assessments.map((assessment, i) => (
+              <div key={assessment.id}>
+                {i > 0 && <div className="mb-6 border-t" />}
+                <SocialFormSummary assessment={assessment} />
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Committee Ratings</CardTitle>
-            <CardDescription>Each member rates independently — average shown live</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <RatingAverageChart ratings={student.committee_ratings} />
-            <CommitteeRatingPanel
-              studentId={student.id}
-              cycleId={student.cycle_id}
-              ratings={student.committee_ratings}
-              myUserId={myUserId}
-              canRate={can(role, "recordCommitteeDecision")}
-              onRated={load}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Committee Ratings</CardTitle>
+          <CardDescription>Each member rates independently — average shown live</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <RatingAverageChart ratings={student.committee_ratings} />
+          <CommitteeRatingPanel
+            studentId={student.id}
+            cycleId={student.cycle_id}
+            ratings={student.committee_ratings}
+            myUserId={myUserId}
+            canRate={can(role, "recordCommitteeDecision")}
+            onRated={load}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
-import { CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { getSignedStudentDocumentUrls, pickLatestPhotoPath } from "@/lib/supabase/storage";
+import { cn } from "@/lib/utils";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   strongly_recommend: "Strongly recommends",
@@ -126,15 +127,21 @@ export default function CommitteeQueuePage() {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-2 text-xs text-muted-foreground">
-                        <p>
-                          Social form:{" "}
-                          <span className="text-foreground">
-                            {socialAssessment
-                              ? `${CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} (${socialAssessment.final_score})`
-                              : "Not recorded"}
-                          </span>{" "}
-                          · GPA: <span className="text-foreground">{student.gpa ?? "—"}</span>
-                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {socialAssessment ? (
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs font-medium",
+                                CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
+                              )}
+                            >
+                              {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} · {socialAssessment.final_score}
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">No social form</span>
+                          )}
+                          <span>GPA: <span className="text-foreground">{student.gpa ?? "—"}</span></span>
+                        </div>
                         <p>
                           Exam:{" "}
                           <span className="text-foreground">

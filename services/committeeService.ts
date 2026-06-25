@@ -4,6 +4,7 @@ import type { CommitteeRatingCriterion } from "@/lib/constants";
 
 type CommitteeDecisionInsert = Database["public"]["Tables"]["committee_decisions"]["Insert"];
 type CommitteeRatingRow = Database["public"]["Tables"]["committee_ratings"]["Row"];
+export type SocialAssessmentRow = Database["public"]["Tables"]["social_assessments"]["Row"];
 
 export type CommitteeQueueItem = {
   id: string;
@@ -117,12 +118,18 @@ export type CommitteeDossier = {
   first_name: string;
   last_name: string;
   gender: string;
+  dob: string | null;
   status: string;
   cycle_id: string;
   gpa: number | null;
+  grade: string | null;
+  district_name: string | null;
+  commune_name: string | null;
+  village_name: string | null;
   family_income_monthly: number | null;
   provinces: { name_en: string } | null;
   school_partners: { school_name: string } | null;
+  ngo_partners: { organization_name: string } | null;
   exam_results: {
     math_score: number;
     english_score: number;
@@ -142,16 +149,7 @@ export type CommitteeDossier = {
     comments: string | null;
     recommendation: string | null;
   } | null;
-  social_assessments: {
-    id: string;
-    visit_number: number;
-    housing_type_band: string | null;
-    income_band: string | null;
-    final_score: number;
-    category: string;
-    poverty_certificate: string | null;
-    visitor_comments: string | null;
-  }[];
+  social_assessments: SocialAssessmentRow[];
   student_documents: { doc_type: string; file_path: string; uploaded_at: string }[];
   committee_decisions: {
     decision: string | null;
@@ -163,11 +161,12 @@ export type CommitteeDossier = {
 };
 
 const DOSSIER_SELECT = `
-  id, student_code, first_name, last_name, gender, status, cycle_id, gpa, family_income_monthly,
-  provinces(name_en), school_partners(school_name),
+  id, student_code, first_name, last_name, gender, dob, status, cycle_id, gpa, grade,
+  district_name, commune_name, village_name, family_income_monthly,
+  provinces(name_en), school_partners(school_name), ngo_partners(organization_name),
   exam_results(math_score, english_score, logic_score, computer_score, total_score, rank_in_cycle, rank_in_province, pass_status),
   interviews(communication_score, leadership_score, motivation_score, confidence_score, critical_thinking_score, comments, recommendation),
-  social_assessments(id, visit_number, housing_type_band, income_band, final_score, category, poverty_certificate, visitor_comments),
+  social_assessments(*),
   student_documents(doc_type, file_path, uploaded_at),
   committee_decisions(decision, decision_date, poor_level, approval_status),
   committee_ratings(*)
