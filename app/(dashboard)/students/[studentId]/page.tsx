@@ -22,7 +22,7 @@ import {
 import { getStudent, type StudentDetail } from "@/services/studentService";
 import { sendToCommittee } from "@/services/committeeService";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS } from "@/features/social-form/scoring";
-import { STUDENT_STATUSES } from "@/lib/constants";
+import { STUDENT_STATUSES, STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { pickLatestPhotoPath } from "@/lib/supabase/storage";
 import {
@@ -44,20 +44,6 @@ const RECOMMENDATION_LABELS: Record<string, string> = {
   recommend: "Recommend",
   neutral: "Neutral",
   not_recommend: "Do Not Recommend",
-};
-
-const STATUS_BADGE_CLASSES: Record<string, string> = {
-  registered: "bg-muted text-muted-foreground",
-  exam_completed: "bg-blue-100 text-blue-700",
-  interview_completed: "bg-blue-100 text-blue-700",
-  home_visit_completed: "bg-blue-100 text-blue-700",
-  committee_review: "bg-violet-100 text-violet-700",
-  selected: "bg-green-100 text-green-700",
-  waitlisted: "bg-amber-100 text-amber-700",
-  rejected: "bg-red-100 text-red-700",
-  eliminated: "bg-red-100 text-red-700",
-  declined: "bg-orange-100 text-orange-700",
-  dropped_out: "bg-muted text-muted-foreground",
 };
 
 const PIPELINE_STAGES: { status: string; label: string }[] = [
@@ -225,7 +211,7 @@ export default function StudentDetailPage() {
               {student.first_name} {student.last_name}
             </h1>
             <p className="text-sm text-muted-foreground">{student.student_code}</p>
-            <Badge className={cn("mt-1.5", STATUS_BADGE_CLASSES[student.status] ?? "bg-muted text-muted-foreground")}>
+            <Badge className={cn("mt-1.5", STUDENT_STATUS_BADGE_CLASSES[student.status] ?? "bg-muted text-muted-foreground")}>
               {student.status.replace(/_/g, " ")}
             </Badge>
           </div>

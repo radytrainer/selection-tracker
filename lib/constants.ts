@@ -35,6 +35,21 @@ export function advanceStatus(current: StudentStatus, target: StudentStatus): St
   return STUDENT_STATUSES.indexOf(target) > STUDENT_STATUSES.indexOf(current) ? target : current;
 }
 
+/** One color per pipeline stage/outcome so a status is recognizable at a glance, without reading the label. Shared by the Students table and the student profile page. */
+export const STUDENT_STATUS_BADGE_CLASSES: Record<StudentStatus, string> = {
+  registered: "bg-slate-100 text-slate-700",
+  exam_completed: "bg-sky-100 text-sky-700",
+  interview_completed: "bg-blue-100 text-blue-700",
+  home_visit_completed: "bg-indigo-100 text-indigo-700",
+  committee_review: "bg-violet-100 text-violet-700",
+  selected: "bg-green-100 text-green-700",
+  waitlisted: "bg-amber-100 text-amber-700",
+  rejected: "bg-red-100 text-red-700",
+  eliminated: "bg-rose-100 text-rose-700",
+  declined: "bg-orange-100 text-orange-700",
+  dropped_out: "bg-gray-200 text-gray-600",
+};
+
 export const OUTREACH_STATUSES = [
   "not_contacted",
   "contacted",

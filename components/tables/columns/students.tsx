@@ -14,24 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { softDeleteStudent, type StudentListItem } from "@/services/studentService";
 
 /** Committee isn't relevant until the home visit (social form) is done — these statuses come before it. */
 const PRE_HOME_VISIT_STATUSES = new Set(["registered", "exam_completed", "interview_completed"]);
-
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  registered: "outline",
-  exam_completed: "secondary",
-  interview_completed: "secondary",
-  home_visit_completed: "secondary",
-  committee_review: "secondary",
-  selected: "default",
-  waitlisted: "outline",
-  rejected: "destructive",
-  eliminated: "destructive",
-  declined: "secondary",
-  dropped_out: "destructive",
-};
 
 export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListItem>[] {
   return [
@@ -57,7 +45,7 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
               render={
                 <Link
                   href={`/students/${row.original.id}/social-form`}
-                  className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border bg-muted text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                  className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-pink-200 bg-pink-50 text-pink-600 transition-colors hover:bg-pink-100"
                 />
               }
             >
@@ -71,7 +59,7 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
                 render={
                   <Link
                     href={`/committee/${row.original.id}`}
-                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border bg-muted text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 text-indigo-600 transition-colors hover:bg-indigo-100"
                   />
                 }
               >
@@ -102,7 +90,9 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge variant={STATUS_VARIANT[row.original.status] ?? "outline"}>
+        <Badge
+          className={cn(STUDENT_STATUS_BADGE_CLASSES[row.original.status] ?? "bg-muted text-muted-foreground")}
+        >
           {row.original.status.replace(/_/g, " ")}
         </Badge>
       ),
