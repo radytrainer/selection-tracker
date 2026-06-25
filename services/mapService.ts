@@ -12,12 +12,19 @@ export type ProvinceStats = {
   interviewCompleted: number;
   homeVisitCompleted: number;
   selectedStudents: number;
+  ngoStudents: number;
+  ngoMaleStudents: number;
+  ngoFemaleStudents: number;
+  nonNgoStudents: number;
+  nonNgoMaleStudents: number;
+  nonNgoFemaleStudents: number;
 };
 
 type StudentAggRow = {
   id: string;
   gender: string;
   province_id: string | null;
+  referred_by_ngo_id: string | null;
   // exam_results/interviews/committee_decisions embed as a single object (or
   // null) rather than an array: their FK to students carries a `unique`
   // constraint, so PostgREST treats the relationship as to-one.
@@ -48,7 +55,7 @@ export async function getProvinceStats(cycleId?: string): Promise<ProvinceStats[
   let studentQuery = supabase
     .from("students")
     .select(
-      "id, gender, province_id, exam_results(id), interviews(id), social_assessments(id), committee_decisions(decision)",
+      "id, gender, province_id, referred_by_ngo_id, exam_results(id), interviews(id), social_assessments(id), committee_decisions(decision)",
     )
     .is("deleted_at", null);
   if (cycleId) studentQuery = studentQuery.eq("cycle_id", cycleId);
@@ -66,6 +73,8 @@ export async function getProvinceStats(cycleId?: string): Promise<ProvinceStats[
 
   return (provinces ?? []).map((province) => {
     const rows = byProvince.get(province.id) ?? [];
+    const ngoRows = rows.filter((r) => r.referred_by_ngo_id);
+    const nonNgoRows = rows.filter((r) => !r.referred_by_ngo_id);
     return {
       provinceId: province.id,
       code: province.code,
@@ -78,6 +87,12 @@ export async function getProvinceStats(cycleId?: string): Promise<ProvinceStats[
       interviewCompleted: rows.filter((r) => r.interviews).length,
       homeVisitCompleted: rows.filter((r) => r.social_assessments?.length).length,
       selectedStudents: rows.filter((r) => r.committee_decisions?.decision === "selected").length,
+      ngoStudents: ngoRows.length,
+      ngoMaleStudents: ngoRows.filter((r) => r.gender === "male").length,
+      ngoFemaleStudents: ngoRows.filter((r) => r.gender === "female").length,
+      nonNgoStudents: nonNgoRows.length,
+      nonNgoMaleStudents: nonNgoRows.filter((r) => r.gender === "male").length,
+      nonNgoFemaleStudents: nonNgoRows.filter((r) => r.gender === "female").length,
     };
   });
 }

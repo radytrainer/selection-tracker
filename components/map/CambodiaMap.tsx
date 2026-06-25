@@ -107,7 +107,6 @@ export function CambodiaMap({
         const value = metricValue(province);
         const radius = 8 + (value / max) * 22;
         const color = colorForCount(value, max);
-        const studentCount = studentValue(province, genderFilter);
 
         return (
           <CircleMarker
@@ -127,14 +126,18 @@ export function CambodiaMap({
             <Popup>
               <div className="space-y-0.5 text-xs">
                 <p className="font-semibold">{province.nameEn}</p>
-                <p>Students shown: {studentCount}</p>
-                <p>Male: {province.maleStudents} · Female: {province.femaleStudents} · Other: {province.otherStudents}</p>
-                <p>NGO Partners: {ngoCountByProvince.get(province.code) ?? 0}</p>
-                <p>School Partners: {schoolCountByProvince.get(province.code) ?? 0}</p>
-                <p>Exam Completed: {province.examCompleted}</p>
-                <p>Interview Completed: {province.interviewCompleted}</p>
-                <p>Home Visits Completed: {province.homeVisitCompleted}</p>
-                <p>Selected: {province.selectedStudents}</p>
+                <p>Total Students: {province.totalStudents}</p>
+                <p>Male: {province.maleStudents} · Female: {province.femaleStudents}</p>
+                <p>
+                  From NGO: {province.ngoStudents} (Male: {province.ngoMaleStudents} · Female:{" "}
+                  {province.ngoFemaleStudents})
+                </p>
+                <p>
+                  Non-NGO: {province.nonNgoStudents} (Male: {province.nonNgoMaleStudents} · Female:{" "}
+                  {province.nonNgoFemaleStudents})
+                </p>
+                <p>Home Visit Completed: {province.homeVisitCompleted}</p>
+                <p>Final Selected: {province.selectedStudents}</p>
               </div>
             </Popup>
           </CircleMarker>
