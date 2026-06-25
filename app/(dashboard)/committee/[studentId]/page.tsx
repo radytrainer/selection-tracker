@@ -31,6 +31,7 @@ import { RatingAverageChart } from "@/components/committee/RatingAverageChart";
 import { CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { pickLatestPhotoPath } from "@/lib/supabase/storage";
+import { cn } from "@/lib/utils";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   strongly_recommend: "Strongly Recommend",
@@ -38,6 +39,9 @@ const RECOMMENDATION_LABELS: Record<string, string> = {
   neutral: "Neutral",
   not_recommend: "Do Not Recommend",
 };
+
+const POOR_LEVELS = ["A+", "A", "A-", "B+", "B", "B-"] as const;
+type PoorLevel = (typeof POOR_LEVELS)[number];
 
 export default function CommitteeDossierPage() {
   const params = useParams<{ studentId: string }>();
@@ -47,10 +51,14 @@ export default function CommitteeDossierPage() {
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [decidingDecision, setDecidingDecision] = useState<string | null>(null);
+  const [poorLevel, setPoorLevel] = useState<PoorLevel | null>(null);
 
   const load = useCallback(() => {
     return getCommitteeDossier(params.studentId)
-      .then(setStudent)
+      .then((data) => {
+        setStudent(data);
+        setPoorLevel((data.committee_decisions?.poor_level as PoorLevel | null) ?? null);
+      })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load dossier"))
       .finally(() => setLoading(false));
   }, [params.studentId]);
@@ -64,11 +72,11 @@ export default function CommitteeDossierPage() {
     getMyProfile(user.uid).then((profile) => setMyUserId(profile?.id ?? null));
   }, [user]);
 
-  async function handleDecision(decision: "selected" | "waitlisted" | "rejected") {
+  async function handleDecision(decision: "selected" | "waitlisted" | "rejected" | "eliminated") {
     if (!student) return;
     setDecidingDecision(decision);
     try {
-      await recordCommitteeDecision({ studentId: student.id, cycleId: student.cycle_id, decision });
+      await recordCommitteeDecision({ studentId: student.id, cycleId: student.cycle_id, decision, poorLevel });
       toast.success(`${student.first_name} ${student.last_name} marked ${decision}`);
       load();
     } catch (error) {
@@ -254,8 +262,14 @@ export default function CommitteeDossierPage() {
           {student.committee_decisions?.decision ? (
             <p className="text-sm">
               Decision: <span className="font-medium capitalize">{student.committee_decisions.decision}</span> on{" "}
-              {student.committee_decisions.decision_date} · Approval:{" "}
-              <span className="capitalize">{student.committee_decisions.approval_status}</span>
+              {student.committee_decisions.decision_date}
+              {student.committee_decisions.poor_level && (
+                <>
+                  {" "}
+                  · Poor Level: <span className="font-medium">{student.committee_decisions.poor_level}</span>
+                </>
+              )}
+              {" "}· Approval: <span className="capitalize">{student.committee_decisions.approval_status}</span>
             </p>
           ) : student.status !== "committee_review" ? (
             <p className="text-sm text-muted-foreground">
@@ -266,24 +280,57 @@ export default function CommitteeDossierPage() {
             </p>
           ) : (
             <RoleGate capability="recordCommitteeDecision">
-              <div className="flex gap-2">
-                <Button disabled={decidingDecision !== null} onClick={() => handleDecision("selected")}>
-                  Select
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={decidingDecision !== null}
-                  onClick={() => handleDecision("waitlisted")}
-                >
-                  Waitlist
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={decidingDecision !== null}
-                  onClick={() => handleDecision("rejected")}
-                >
-                  Reject
-                </Button>
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-2 text-sm font-medium">
+                    Poor Level <span className="font-normal text-muted-foreground">(A+ = very poor)</span>
+                  </p>
+                  <div className="flex gap-1.5">
+                    {POOR_LEVELS.map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        aria-pressed={poorLevel === level}
+                        onClick={() => setPoorLevel(poorLevel === level ? null : level)}
+                        className={cn(
+                          "flex size-10 items-center justify-center rounded-lg border-2 text-sm font-semibold transition-colors",
+                          poorLevel === level
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/40",
+                        )}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button disabled={decidingDecision !== null} onClick={() => handleDecision("selected")}>
+                    Select
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={decidingDecision !== null}
+                    onClick={() => handleDecision("waitlisted")}
+                  >
+                    Waitlist
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={decidingDecision !== null}
+                    onClick={() => handleDecision("rejected")}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={decidingDecision !== null}
+                    onClick={() => handleDecision("eliminated")}
+                  >
+                    Eliminated
+                  </Button>
+                </div>
               </div>
             </RoleGate>
           )}

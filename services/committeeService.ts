@@ -55,6 +55,7 @@ export async function recordCommitteeDecision(input: {
   studentId: string;
   cycleId: string;
   decision: NonNullable<CommitteeDecisionInsert["decision"]>;
+  poorLevel?: CommitteeDecisionInsert["poor_level"];
 }) {
   const supabase = createClient();
 
@@ -63,6 +64,7 @@ export async function recordCommitteeDecision(input: {
     cycle_id: input.cycleId,
     decision: input.decision,
     decision_date: new Date().toISOString().slice(0, 10),
+    poor_level: input.poorLevel ?? null,
   });
   if (decisionError) throw decisionError;
 
@@ -151,7 +153,12 @@ export type CommitteeDossier = {
     visitor_comments: string | null;
   }[];
   student_documents: { doc_type: string; file_path: string; uploaded_at: string }[];
-  committee_decisions: { decision: string | null; decision_date: string | null; approval_status: string } | null;
+  committee_decisions: {
+    decision: string | null;
+    decision_date: string | null;
+    poor_level: string | null;
+    approval_status: string;
+  } | null;
   committee_ratings: CommitteeRatingRow[];
 };
 
@@ -162,7 +169,7 @@ const DOSSIER_SELECT = `
   interviews(communication_score, leadership_score, motivation_score, confidence_score, critical_thinking_score, comments, recommendation),
   social_assessments(id, visit_number, housing_type_band, income_band, final_score, category, poverty_certificate, visitor_comments),
   student_documents(doc_type, file_path, uploaded_at),
-  committee_decisions(decision, decision_date, approval_status),
+  committee_decisions(decision, decision_date, poor_level, approval_status),
   committee_ratings(*)
 `;
 

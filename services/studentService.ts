@@ -9,6 +9,7 @@ export type StudentListItem = Student & {
   provinces: { name_en: string } | null;
   school_partners: { school_name: string } | null;
   ngo_partners: { organization_name: string } | null;
+  committee_decisions: { decision: string | null; poor_level: string | null } | null;
 };
 
 type ExamResult = Database["public"]["Tables"]["exam_results"]["Row"];
@@ -45,7 +46,7 @@ export type StudentFilters = {
 };
 
 const STUDENT_LIST_SELECT =
-  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name)";
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level)";
 
 export async function listStudents(filters: StudentFilters) {
   const supabase = createClient();

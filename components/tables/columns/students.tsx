@@ -24,19 +24,9 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
   selected: "default",
   waitlisted: "outline",
   rejected: "destructive",
+  eliminated: "destructive",
   dropped_out: "destructive",
 };
-
-function calculateAge(dob: string | null): number | null {
-  if (!dob) return null;
-  const birthDate = new Date(dob);
-  if (Number.isNaN(birthDate.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
-  return age;
-}
 
 export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListItem>[] {
   return [
@@ -60,11 +50,6 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
       cell: ({ row }) => <span className="capitalize">{row.original.gender}</span>,
     },
     {
-      id: "age",
-      header: "Age",
-      cell: ({ row }) => calculateAge(row.original.dob) ?? "—",
-    },
-    {
       id: "province",
       header: "Province",
       cell: ({ row }) => row.original.provinces?.name_en ?? "—",
@@ -82,6 +67,11 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
           {row.original.status.replace(/_/g, " ")}
         </Badge>
       ),
+    },
+    {
+      id: "poor_level",
+      header: "Poor Level",
+      cell: ({ row }) => row.original.committee_decisions?.poor_level ?? "—",
     },
     {
       id: "ngo",

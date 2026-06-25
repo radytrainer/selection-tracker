@@ -312,6 +312,7 @@ export type Database = {
             | "selected"
             | "waitlisted"
             | "rejected"
+            | "eliminated"
             | "dropped_out";
           created_at: string;
           updated_at: string;
@@ -355,6 +356,7 @@ export type Database = {
             | "selected"
             | "waitlisted"
             | "rejected"
+            | "eliminated"
             | "dropped_out";
           created_at?: string;
           updated_at?: string;
@@ -680,8 +682,9 @@ export type Database = {
           id: string;
           student_id: string;
           cycle_id: string;
-          decision: "selected" | "waitlisted" | "rejected" | null;
+          decision: "selected" | "waitlisted" | "rejected" | "eliminated" | null;
           decision_date: string | null;
+          poor_level: "A+" | "A" | "A-" | "B+" | "B" | "B-" | null;
           approval_status: "pending" | "approved" | "rejected";
           approved_by: string | null;
           created_at: string;
@@ -691,8 +694,9 @@ export type Database = {
           id?: string;
           student_id: string;
           cycle_id: string;
-          decision?: "selected" | "waitlisted" | "rejected" | null;
+          decision?: "selected" | "waitlisted" | "rejected" | "eliminated" | null;
           decision_date?: string | null;
+          poor_level?: "A+" | "A" | "A-" | "B+" | "B" | "B-" | null;
           approval_status?: "pending" | "approved" | "rejected";
           approved_by?: string | null;
           created_at?: string;
