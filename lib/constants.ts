@@ -24,6 +24,7 @@ export const STUDENT_STATUSES = [
   "waitlisted",
   "rejected",
   "eliminated",
+  "declined",
   "dropped_out",
 ] as const;
 

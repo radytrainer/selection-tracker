@@ -29,6 +29,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
   waitlisted: "outline",
   rejected: "destructive",
   eliminated: "destructive",
+  declined: "secondary",
   dropped_out: "destructive",
 };
 

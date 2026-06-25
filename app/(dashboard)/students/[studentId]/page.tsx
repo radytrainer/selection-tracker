@@ -56,6 +56,7 @@ const STATUS_BADGE_CLASSES: Record<string, string> = {
   waitlisted: "bg-amber-100 text-amber-700",
   rejected: "bg-red-100 text-red-700",
   eliminated: "bg-red-100 text-red-700",
+  declined: "bg-orange-100 text-orange-700",
   dropped_out: "bg-muted text-muted-foreground",
 };
 

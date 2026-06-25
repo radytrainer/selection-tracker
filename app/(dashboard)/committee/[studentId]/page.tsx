@@ -15,6 +15,7 @@ import {
   Clock,
   XCircle,
   AlertOctagon,
+  UserX,
 } from "lucide-react";
 import {
   getCommitteeDossier,
@@ -52,6 +53,7 @@ const DECISION_BANNER: Record<string, { icon: typeof CheckCircle2; classes: stri
   waitlisted: { icon: Clock, classes: "bg-amber-50 text-amber-700 border-amber-200" },
   rejected: { icon: XCircle, classes: "bg-red-50 text-red-700 border-red-200" },
   eliminated: { icon: AlertOctagon, classes: "bg-red-50 text-red-700 border-red-200" },
+  declined: { icon: UserX, classes: "bg-orange-50 text-orange-700 border-orange-200" },
 };
 
 export default function CommitteeDossierPage() {
@@ -83,7 +85,7 @@ export default function CommitteeDossierPage() {
     getMyProfile(user.uid).then((profile) => setMyUserId(profile?.id ?? null));
   }, [user]);
 
-  async function handleDecision(decision: "selected" | "waitlisted" | "rejected" | "eliminated") {
+  async function handleDecision(decision: "selected" | "waitlisted" | "rejected" | "eliminated" | "declined") {
     if (!student) return;
     setDecidingDecision(decision);
     try {
@@ -345,6 +347,30 @@ export default function CommitteeDossierPage() {
                         ))}
                       </div>
                     </div>
+
+                    {(decision === "selected" || decision === "declined") && (
+                      <div>
+                        <Button
+                          variant="outline"
+                          disabled={decidingDecision !== null}
+                          onClick={() => handleDecision("declined")}
+                          className={cn(
+                            "w-full",
+                            decision === "declined" &&
+                              "border-orange-300 bg-orange-50 text-orange-700 ring-2 ring-orange-300 ring-offset-2 ring-offset-background hover:bg-orange-50",
+                          )}
+                        >
+                          <UserX className="size-4" />
+                          {decidingDecision === "declined" ? "Saving..." : "Student Declined the Offer"}
+                          {decision === "declined" && decidingDecision !== "declined" && (
+                            <CheckCircle2 className="size-3.5" />
+                          )}
+                        </Button>
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          Use this when a selected student turns down the scholarship. Click &quot;Select&quot; above to undo.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
