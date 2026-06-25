@@ -755,7 +755,7 @@ export type Database = {
           student_id: string;
           cycle_id: string;
           rated_by: string;
-          criterion: "financial_need" | "family_condition" | "academic_performance" | "interview_fit";
+          criterion: "overall";
           score: number;
           created_at: string;
           updated_at: string;
@@ -765,7 +765,7 @@ export type Database = {
           student_id: string;
           cycle_id: string;
           rated_by?: string;
-          criterion: "financial_need" | "family_condition" | "academic_performance" | "interview_fit";
+          criterion?: "overall";
           score: number;
           created_at?: string;
           updated_at?: string;

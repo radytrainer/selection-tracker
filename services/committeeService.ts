@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import type { CommitteeRatingCriterion } from "@/lib/constants";
 
 type CommitteeDecisionInsert = Database["public"]["Tables"]["committee_decisions"]["Insert"];
 type CommitteeRatingRow = Database["public"]["Tables"]["committee_ratings"]["Row"];
@@ -191,11 +190,14 @@ export async function sendToCommittee(studentId: string) {
   if (error) throw error;
 }
 
-/** rated_by is filled server-side from the caller's own user row (see migration 0009), so it's never sent here. */
+/**
+ * rated_by is filled server-side from the caller's own user row (see
+ * migration 0009), so it's never sent here. One overall 1-5 rating per
+ * voter per student (see migration 0018) — criterion is always "overall".
+ */
 export async function upsertCommitteeRating(input: {
   studentId: string;
   cycleId: string;
-  criterion: CommitteeRatingCriterion;
   score: number;
 }) {
   const supabase = createClient();
@@ -203,7 +205,7 @@ export async function upsertCommitteeRating(input: {
     {
       student_id: input.studentId,
       cycle_id: input.cycleId,
-      criterion: input.criterion,
+      criterion: "overall",
       score: input.score,
     },
     { onConflict: "student_id,rated_by,criterion" },

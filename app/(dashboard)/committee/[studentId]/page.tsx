@@ -35,7 +35,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RoleGate } from "@/components/layout/RoleGate";
 import { CommitteeRatingPanel } from "@/components/committee/CommitteeRatingPanel";
 import { RatingAverageChart } from "@/components/committee/RatingAverageChart";
 import { SocialFormSummary } from "@/components/committee/SocialFormSummary";
@@ -121,6 +120,8 @@ export default function CommitteeDossierPage() {
 
   const decision = student.committee_decisions?.decision ?? null;
   const banner = decision ? DECISION_BANNER[decision] : null;
+  const canSeeDecision = can(role, "recordCommitteeDecision");
+  const canRate = can(role, "rateCommitteeCandidate");
 
   return (
     <div className="space-y-6 pb-10">
@@ -204,8 +205,8 @@ export default function CommitteeDossierPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className={cn("grid grid-cols-1 gap-6", canSeeDecision && "lg:grid-cols-3")}>
+        <div className={cn("space-y-6", canSeeDecision && "lg:col-span-2")}>
           <Card>
             <CardHeader>
               <CardTitle>Social Form (Home Visit)</CardTitle>
@@ -232,63 +233,66 @@ export default function CommitteeDossierPage() {
           <Card>
             <CardHeader>
               <CardTitle>Committee Ratings</CardTitle>
-              <CardDescription>Each member rates independently — average shown live</CardDescription>
+              <CardDescription>
+                {canRate ? "Cast your vote — each member votes independently" : "Average shown live as members vote"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <RatingAverageChart ratings={student.committee_ratings} />
-              <CommitteeRatingPanel
-                studentId={student.id}
-                cycleId={student.cycle_id}
-                ratings={student.committee_ratings}
-                myUserId={myUserId}
-                canRate={can(role, "recordCommitteeDecision")}
-                onRated={load}
-              />
+              {canRate && (
+                <CommitteeRatingPanel
+                  studentId={student.id}
+                  cycleId={student.cycle_id}
+                  ratings={student.committee_ratings}
+                  myUserId={myUserId}
+                  onRated={load}
+                />
+              )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="lg:sticky lg:top-6 lg:col-span-1 lg:self-start">
-          <Card>
-            <CardHeader>
-              <CardTitle>Decision</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {student.committee_decisions?.decision && banner ? (
-                <div className={cn("space-y-2 rounded-lg border p-3", banner.classes)}>
-                  <div className="flex items-center gap-2 font-medium capitalize">
-                    <banner.icon className="size-4 shrink-0" />
-                    {student.committee_decisions.decision}
-                  </div>
-                  <dl className="space-y-1 text-xs">
-                    <div className="flex justify-between gap-3">
-                      <dt>Decided on</dt>
-                      <dd className="font-medium">{student.committee_decisions.decision_date}</dd>
+        {canSeeDecision && (
+          <div className="lg:sticky lg:top-6 lg:col-span-1 lg:self-start">
+            <Card>
+              <CardHeader>
+                <CardTitle>Decision</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {student.committee_decisions?.decision && banner ? (
+                  <div className={cn("space-y-2 rounded-lg border p-3", banner.classes)}>
+                    <div className="flex items-center gap-2 font-medium capitalize">
+                      <banner.icon className="size-4 shrink-0" />
+                      {student.committee_decisions.decision}
                     </div>
-                    {student.committee_decisions.poor_level && (
+                    <dl className="space-y-1 text-xs">
                       <div className="flex justify-between gap-3">
-                        <dt>Poor Level</dt>
-                        <dd className="font-medium">{student.committee_decisions.poor_level}</dd>
+                        <dt>Decided on</dt>
+                        <dd className="font-medium">{student.committee_decisions.decision_date}</dd>
                       </div>
-                    )}
-                    <div className="flex justify-between gap-3">
-                      <dt>Approval</dt>
-                      <dd className="font-medium capitalize">{student.committee_decisions.approval_status}</dd>
-                    </div>
-                  </dl>
-                </div>
-              ) : student.status !== "committee_review" ? (
-                <p className="text-sm text-muted-foreground">
-                  This case hasn&apos;t been sent to committee yet.{" "}
-                  <Link
-                    href={`/students/${student.id}`}
-                    className={buttonVariants({ variant: "link", className: "px-0" })}
-                  >
-                    Continue the pipeline
-                  </Link>
-                </p>
-              ) : (
-                <RoleGate capability="recordCommitteeDecision">
+                      {student.committee_decisions.poor_level && (
+                        <div className="flex justify-between gap-3">
+                          <dt>Poor Level</dt>
+                          <dd className="font-medium">{student.committee_decisions.poor_level}</dd>
+                        </div>
+                      )}
+                      <div className="flex justify-between gap-3">
+                        <dt>Approval</dt>
+                        <dd className="font-medium capitalize">{student.committee_decisions.approval_status}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                ) : student.status !== "committee_review" ? (
+                  <p className="text-sm text-muted-foreground">
+                    This case hasn&apos;t been sent to committee yet.{" "}
+                    <Link
+                      href={`/students/${student.id}`}
+                      className={buttonVariants({ variant: "link", className: "px-0" })}
+                    >
+                      Continue the pipeline
+                    </Link>
+                  </p>
+                ) : (
                   <div className="space-y-5">
                     <div>
                       <p className="mb-2 text-sm font-medium">
@@ -341,11 +345,11 @@ export default function CommitteeDossierPage() {
                       </Button>
                     </div>
                   </div>
-                </RoleGate>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -52,37 +52,6 @@ export const OUTREACH_STATUS_LABELS: Record<OutreachStatus, string> = {
   inactive: "Inactive",
 };
 
-export const COMMITTEE_RATING_CRITERIA = [
-  "financial_need",
-  "family_condition",
-  "academic_performance",
-  "interview_fit",
-] as const;
-
-export type CommitteeRatingCriterion = (typeof COMMITTEE_RATING_CRITERIA)[number];
-
-export const COMMITTEE_RATING_CRITERIA_INFO: Record<
-  CommitteeRatingCriterion,
-  { label: string; description: string }
-> = {
-  financial_need: {
-    label: "Financial Need",
-    description: "Family income and poverty level fit the scholarship's target criteria.",
-  },
-  family_condition: {
-    label: "Family Condition",
-    description: "Housing, stability, and household circumstances from the home visit.",
-  },
-  academic_performance: {
-    label: "Academic Performance",
-    description: "GPA and exam results relative to other candidates.",
-  },
-  interview_fit: {
-    label: "Interview & Motivation Fit",
-    description: "Communication, motivation, and the interviewer's recommendation.",
-  },
-};
-
 /** Role landing page after login — keeps the dashboard route gating simple. */
 export const ROLE_HOME: Record<AppRole, string> = {
   super_admin: "/dashboard",

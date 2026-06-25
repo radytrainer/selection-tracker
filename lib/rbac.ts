@@ -13,7 +13,8 @@ export const CAPABILITIES = {
   enterExamScores: ["super_admin", "program_manager", "selection_team"],
   enterInterviewScores: ["super_admin", "program_manager", "interview_team"],
   enterHomeVisitData: ["super_admin", "program_manager", "home_visit_team"],
-  recordCommitteeDecision: ["super_admin", "program_manager", "committee_member"],
+  recordCommitteeDecision: ["super_admin", "program_manager"],
+  rateCommitteeCandidate: ["committee_member"],
   approveCommitteeDecision: ["super_admin", "program_manager"],
   viewAllStudentPii: [
     "super_admin",

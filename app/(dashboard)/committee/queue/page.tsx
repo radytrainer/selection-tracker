@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { useRole } from "@/hooks/useRole";
+import { can } from "@/lib/rbac";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { getSignedStudentDocumentUrls, pickLatestPhotoPath } from "@/lib/supabase/storage";
@@ -40,6 +42,8 @@ function ratingSummary(student: CommitteeQueueItem) {
 }
 
 export default function CommitteeQueuePage() {
+  const { role } = useRole();
+  const canSeeQueue = can(role, "recordCommitteeDecision") || can(role, "rateCommitteeCandidate");
   const [queue, setQueue] = useState<CommitteeQueueItem[]>([]);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
@@ -94,7 +98,7 @@ export default function CommitteeQueuePage() {
         </p>
       </div>
 
-      <RoleGate capability="recordCommitteeDecision">
+      {canSeeQueue && (
         <div className="space-y-3">
           <h2 className="text-lg font-medium">Awaiting Decision ({queue.length})</h2>
           {queue.length === 0 ? (
@@ -163,7 +167,7 @@ export default function CommitteeQueuePage() {
             </div>
           )}
         </div>
-      </RoleGate>
+      )}
 
       <RoleGate capability="approveCommitteeDecision">
         <div className="space-y-3">
