@@ -3,15 +3,16 @@
 import Link from "next/link";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Gavel, HeartHandshake, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RoleGate } from "@/components/layout/RoleGate";
 import { softDeleteStudent, type StudentListItem } from "@/services/studentService";
 
@@ -82,41 +83,69 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <RoleGate capability="createEditStudents">
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem render={<Link href={`/students/${row.original.id}/edit`} />}>
-                <Pencil className="size-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={async () => {
-                  if (
-                    !window.confirm(
-                      `Delete ${row.original.first_name} ${row.original.last_name} (${row.original.student_code})? This can be restored by an admin later.`,
-                    )
-                  ) {
-                    return;
-                  }
-                  try {
-                    await softDeleteStudent(row.original.id);
-                    toast.success("Student deleted");
-                    onChanged();
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Failed to delete student");
-                  }
-                }}
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </RoleGate>
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Link
+                  href={`/students/${row.original.id}/social-form`}
+                  className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                />
+              }
+            >
+              <HeartHandshake className="size-4" />
+            </TooltipTrigger>
+            <TooltipContent>Social Form</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Link
+                  href={`/committee/${row.original.id}`}
+                  className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                />
+              }
+            >
+              <Gavel className="size-4" />
+            </TooltipTrigger>
+            <TooltipContent>Committee</TooltipContent>
+          </Tooltip>
+          <RoleGate capability="createEditStudents">
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                <MoreHorizontal className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem render={<Link href={`/students/${row.original.id}/edit`} />}>
+                  <Pencil className="size-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={async () => {
+                    if (
+                      !window.confirm(
+                        `Delete ${row.original.first_name} ${row.original.last_name} (${row.original.student_code})? This can be restored by an admin later.`,
+                      )
+                    ) {
+                      return;
+                    }
+                    try {
+                      await softDeleteStudent(row.original.id);
+                      toast.success("Student deleted");
+                      onChanged();
+                    } catch (error) {
+                      toast.error(error instanceof Error ? error.message : "Failed to delete student");
+                    }
+                  }}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </RoleGate>
+        </div>
       ),
     },
   ];
