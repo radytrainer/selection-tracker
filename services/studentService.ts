@@ -93,7 +93,69 @@ export async function getStudent(id: string) {
   return data as unknown as StudentDetail;
 }
 
+export class DuplicateStudentError extends Error {
+  constructor(public existing: { id: string; student_code: string; first_name: string; last_name: string }) {
+    super(
+      `This looks like a duplicate of ${existing.first_name} ${existing.last_name} (${existing.student_code}) — every field matches an existing student.`,
+    );
+    this.name = "DuplicateStudentError";
+  }
+}
+
+/**
+ * Same name alone isn't suspicious (common in Cambodia), so this only flags
+ * a duplicate when every other identifying/demographic field also matches
+ * an existing, non-deleted student — administrative fields (school,
+ * referral, exam center, etc.) included, per the literal "all information
+ * the same" bar. excludeId lets editing a student skip matching itself.
+ */
+async function findDuplicateStudent(input: Partial<StudentInsert>, excludeId?: string) {
+  const supabase = createClient();
+  let query = supabase
+    .from("students")
+    .select("id, student_code, first_name, last_name")
+    .is("deleted_at", null)
+    .ilike("first_name", (input.first_name ?? "").trim())
+    .ilike("last_name", (input.last_name ?? "").trim());
+
+  query = input.gender ? query.eq("gender", input.gender) : query;
+  query = input.dob ? query.eq("dob", input.dob) : query.is("dob", null);
+  query = input.phone ? query.eq("phone", input.phone) : query.is("phone", null);
+  query = input.province_id ? query.eq("province_id", input.province_id) : query.is("province_id", null);
+  query = input.district_name ? query.eq("district_name", input.district_name) : query.is("district_name", null);
+  query = input.commune_name ? query.eq("commune_name", input.commune_name) : query.is("commune_name", null);
+  query = input.village_name ? query.eq("village_name", input.village_name) : query.is("village_name", null);
+  query = input.school_id ? query.eq("school_id", input.school_id) : query.is("school_id", null);
+  query = input.referred_by_ngo_id
+    ? query.eq("referred_by_ngo_id", input.referred_by_ngo_id)
+    : query.is("referred_by_ngo_id", null);
+  query = input.information_session
+    ? query.eq("information_session", input.information_session)
+    : query.is("information_session", null);
+  query = input.exam_center ? query.eq("exam_center", input.exam_center) : query.is("exam_center", null);
+  query = input.father_name ? query.eq("father_name", input.father_name) : query.is("father_name", null);
+  query = input.mother_name ? query.eq("mother_name", input.mother_name) : query.is("mother_name", null);
+  query = input.parent_occupation
+    ? query.eq("parent_occupation", input.parent_occupation)
+    : query.is("parent_occupation", null);
+  query =
+    input.family_income_monthly != null
+      ? query.eq("family_income_monthly", input.family_income_monthly)
+      : query.is("family_income_monthly", null);
+  query = input.siblings_count != null ? query.eq("siblings_count", input.siblings_count) : query.is("siblings_count", null);
+  if (excludeId) query = query.neq("id", excludeId);
+
+  const { data, error } = await query.limit(1).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function createStudent(input: StudentInsert) {
+  if (input.first_name && input.last_name) {
+    const duplicate = await findDuplicateStudent(input);
+    if (duplicate) throw new DuplicateStudentError(duplicate);
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase.from("students").insert(input).select().single();
   if (error) throw error;
@@ -101,6 +163,11 @@ export async function createStudent(input: StudentInsert) {
 }
 
 export async function updateStudent(id: string, input: StudentUpdate) {
+  if (input.first_name && input.last_name) {
+    const duplicate = await findDuplicateStudent(input, id);
+    if (duplicate) throw new DuplicateStudentError(duplicate);
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("students")

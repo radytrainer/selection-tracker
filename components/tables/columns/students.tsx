@@ -16,6 +16,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { RoleGate } from "@/components/layout/RoleGate";
 import { softDeleteStudent, type StudentListItem } from "@/services/studentService";
 
+/** Committee isn't relevant until the home visit (social form) is done — these statuses come before it. */
+const PRE_HOME_VISIT_STATUSES = new Set(["registered", "exam_completed", "interview_completed"]);
+
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   registered: "outline",
   exam_completed: "secondary",
@@ -97,19 +100,21 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
             </TooltipTrigger>
             <TooltipContent>Social Form</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Link
-                  href={`/committee/${row.original.id}`}
-                  className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-                />
-              }
-            >
-              <Gavel className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent>Committee</TooltipContent>
-          </Tooltip>
+          {!PRE_HOME_VISIT_STATUSES.has(row.original.status) && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Link
+                    href={`/committee/${row.original.id}`}
+                    className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                  />
+                }
+              >
+                <Gavel className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent>Committee</TooltipContent>
+            </Tooltip>
+          )}
           <RoleGate capability="createEditStudents">
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
