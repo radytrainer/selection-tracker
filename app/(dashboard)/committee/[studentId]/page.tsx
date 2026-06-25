@@ -259,30 +259,7 @@ export default function CommitteeDossierPage() {
                 <CardTitle>Decision</CardTitle>
               </CardHeader>
               <CardContent>
-                {student.committee_decisions?.decision && banner ? (
-                  <div className={cn("space-y-2 rounded-lg border p-3", banner.classes)}>
-                    <div className="flex items-center gap-2 font-medium capitalize">
-                      <banner.icon className="size-4 shrink-0" />
-                      {student.committee_decisions.decision}
-                    </div>
-                    <dl className="space-y-1 text-xs">
-                      <div className="flex justify-between gap-3">
-                        <dt>Decided on</dt>
-                        <dd className="font-medium">{student.committee_decisions.decision_date}</dd>
-                      </div>
-                      {student.committee_decisions.poor_level && (
-                        <div className="flex justify-between gap-3">
-                          <dt>Poor Level</dt>
-                          <dd className="font-medium">{student.committee_decisions.poor_level}</dd>
-                        </div>
-                      )}
-                      <div className="flex justify-between gap-3">
-                        <dt>Approval</dt>
-                        <dd className="font-medium capitalize">{student.committee_decisions.approval_status}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                ) : student.status !== "committee_review" ? (
+                {decision === null && student.status !== "committee_review" ? (
                   <p className="text-sm text-muted-foreground">
                     This case hasn&apos;t been sent to committee yet.{" "}
                     <Link
@@ -294,6 +271,28 @@ export default function CommitteeDossierPage() {
                   </p>
                 ) : (
                   <div className="space-y-5">
+                    {decision && banner && (
+                      <div className={cn("space-y-1.5 rounded-lg border p-3 text-xs", banner.classes)}>
+                        <div className="flex items-center gap-2 text-sm font-medium capitalize">
+                          <banner.icon className="size-4 shrink-0" />
+                          {decision}
+                        </div>
+                        <dl className="space-y-1">
+                          <div className="flex justify-between gap-3">
+                            <dt>Decided on</dt>
+                            <dd className="font-medium">{student.committee_decisions?.decision_date}</dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt>Approval</dt>
+                            <dd className="font-medium capitalize">{student.committee_decisions?.approval_status}</dd>
+                          </div>
+                        </dl>
+                        <p className="pt-1 text-xs opacity-80">
+                          Pick a different option below to change it — it&apos;ll go back to pending approval.
+                        </p>
+                      </div>
+                    )}
+
                     <div>
                       <p className="mb-2 text-sm font-medium">
                         Poor Level <span className="font-normal text-muted-foreground">(A+ = very poor)</span>
@@ -318,31 +317,33 @@ export default function CommitteeDossierPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button disabled={decidingDecision !== null} onClick={() => handleDecision("selected")}>
-                        Select
-                      </Button>
-                      <Button
-                        variant="outline"
-                        disabled={decidingDecision !== null}
-                        onClick={() => handleDecision("waitlisted")}
-                      >
-                        Waitlist
-                      </Button>
-                      <Button
-                        variant="outline"
-                        disabled={decidingDecision !== null}
-                        onClick={() => handleDecision("rejected")}
-                      >
-                        Reject
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        disabled={decidingDecision !== null}
-                        onClick={() => handleDecision("eliminated")}
-                      >
-                        Eliminated
-                      </Button>
+                    <div>
+                      <p className="mb-2 text-sm font-medium">Decision</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(
+                          [
+                            { key: "selected", label: "Select", variant: "default" },
+                            { key: "waitlisted", label: "Waitlist", variant: "outline" },
+                            { key: "rejected", label: "Reject", variant: "outline" },
+                            { key: "eliminated", label: "Eliminated", variant: "destructive" },
+                          ] as const
+                        ).map((d) => (
+                          <Button
+                            key={d.key}
+                            variant={d.variant}
+                            disabled={decidingDecision !== null}
+                            onClick={() => handleDecision(d.key)}
+                            className={cn(
+                              decision === d.key && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+                            )}
+                          >
+                            {decidingDecision === d.key ? "Saving..." : d.label}
+                            {decision === d.key && decidingDecision !== d.key && (
+                              <CheckCircle2 className="size-3.5" />
+                            )}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

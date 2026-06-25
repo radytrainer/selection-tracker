@@ -51,6 +51,13 @@ export async function listCommitteeQueue(cycleId?: string) {
   return (data ?? []) as unknown as CommitteeQueueItem[];
 }
 
+/**
+ * Upsert (not insert) so a decision can be freely changed later — student_id
+ * is unique on committee_decisions, so re-recording just overwrites it.
+ * approval_status resets to "pending" on every call: an approved decision
+ * that gets changed must go through approval again rather than silently
+ * keeping its old sign-off.
+ */
 export async function recordCommitteeDecision(input: {
   studentId: string;
   cycleId: string;
@@ -59,13 +66,18 @@ export async function recordCommitteeDecision(input: {
 }) {
   const supabase = createClient();
 
-  const { error: decisionError } = await supabase.from("committee_decisions").insert({
-    student_id: input.studentId,
-    cycle_id: input.cycleId,
-    decision: input.decision,
-    decision_date: new Date().toISOString().slice(0, 10),
-    poor_level: input.poorLevel ?? null,
-  });
+  const { error: decisionError } = await supabase.from("committee_decisions").upsert(
+    {
+      student_id: input.studentId,
+      cycle_id: input.cycleId,
+      decision: input.decision,
+      decision_date: new Date().toISOString().slice(0, 10),
+      poor_level: input.poorLevel ?? null,
+      approval_status: "pending",
+      approved_by: null,
+    },
+    { onConflict: "student_id" },
+  );
   if (decisionError) throw decisionError;
 
   const { error: statusError } = await supabase
