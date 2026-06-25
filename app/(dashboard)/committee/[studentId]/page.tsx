@@ -131,9 +131,21 @@ export default function CommitteeDossierPage() {
             <Link href="/committee/queue" className="text-sm text-muted-foreground hover:underline">
               ← Back to Committee Queue
             </Link>
-            <h1 className="text-2xl font-semibold">
-              {student.first_name} {student.last_name}
-            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold">
+                {student.first_name} {student.last_name}
+              </h1>
+              {socialAssessment && (
+                <span
+                  className={cn(
+                    "rounded-full px-3 py-1 text-sm font-bold",
+                    CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
+                  )}
+                >
+                  {socialAssessment.final_score} pts · {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               {student.student_code} ·{" "}
               <Link href={`/students/${student.id}`} className="hover:underline">
@@ -142,19 +154,7 @@ export default function CommitteeDossierPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {socialAssessment && (
-            <span
-              className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium",
-                CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
-              )}
-            >
-              {socialAssessment.final_score} pts · {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}
-            </span>
-          )}
-          <Badge className="capitalize">{student.status.replace(/_/g, " ")}</Badge>
-        </div>
+        <Badge className="capitalize">{student.status.replace(/_/g, " ")}</Badge>
       </div>
 
       <Card>
