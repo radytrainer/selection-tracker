@@ -97,9 +97,14 @@ export default function CommitteeDossierPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <StudentAvatar photoPath={photoPath} initials={initials} size="size-12" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <StudentAvatar
+            photoPath={photoPath}
+            initials={initials}
+            size="size-20 sm:size-24"
+            className="text-2xl ring-2 ring-border ring-offset-2 ring-offset-background"
+          />
           <div>
             <Link href="/committee/queue" className="text-sm text-muted-foreground hover:underline">
               ← Back to Committee Queue
