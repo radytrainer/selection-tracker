@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RoleGate } from "@/components/layout/RoleGate";
-import { STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
+import { POOR_LEVEL_BADGE_CLASSES, STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { softDeleteStudent, type StudentListItem } from "@/services/studentService";
 
@@ -100,7 +100,11 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
     {
       id: "poor_level",
       header: "Poor Level",
-      cell: ({ row }) => row.original.committee_decisions?.poor_level ?? "—",
+      cell: ({ row }) => {
+        const poorLevel = row.original.committee_decisions?.poor_level;
+        if (!poorLevel) return "—";
+        return <Badge className={cn(POOR_LEVEL_BADGE_CLASSES[poorLevel])}>{poorLevel}</Badge>;
+      },
     },
     {
       id: "ngo",

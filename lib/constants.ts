@@ -50,6 +50,16 @@ export const STUDENT_STATUS_BADGE_CLASSES: Record<StudentStatus, string> = {
   dropped_out: "bg-gray-200 text-gray-600",
 };
 
+/** A+ down to B- — green family darkens toward A+, orange family darkens toward B+, so the Poor Level column reads at a glance. */
+export const POOR_LEVEL_BADGE_CLASSES: Record<string, string> = {
+  "A+": "bg-green-200 text-green-800",
+  A: "bg-green-100 text-green-700",
+  "A-": "bg-green-50 text-green-600",
+  "B+": "bg-orange-200 text-orange-800",
+  B: "bg-orange-100 text-orange-700",
+  "B-": "bg-orange-50 text-orange-600",
+};
+
 export const OUTREACH_STATUSES = [
   "not_contacted",
   "contacted",
