@@ -5,7 +5,17 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { differenceInYears } from "date-fns";
-import { MapPin, Building2, HeartPulse } from "lucide-react";
+import {
+  MapPin,
+  Building2,
+  HeartPulse,
+  School,
+  Wallet,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  AlertOctagon,
+} from "lucide-react";
 import {
   getCommitteeDossier,
   recordCommitteeDecision,
@@ -27,8 +37,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
 import { CommitteeRatingPanel } from "@/components/committee/CommitteeRatingPanel";
-import { ExamScoreChart } from "@/components/committee/ExamScoreChart";
-import { InterviewScoreChart } from "@/components/committee/InterviewScoreChart";
 import { RatingAverageChart } from "@/components/committee/RatingAverageChart";
 import { SocialFormSummary } from "@/components/committee/SocialFormSummary";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
@@ -37,15 +45,15 @@ import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { pickLatestPhotoPath } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 
-const RECOMMENDATION_LABELS: Record<string, string> = {
-  strongly_recommend: "Strongly Recommend",
-  recommend: "Recommend",
-  neutral: "Neutral",
-  not_recommend: "Do Not Recommend",
-};
-
 const POOR_LEVELS = ["A+", "A", "A-", "B+", "B", "B-"] as const;
 type PoorLevel = (typeof POOR_LEVELS)[number];
+
+const DECISION_BANNER: Record<string, { icon: typeof CheckCircle2; classes: string }> = {
+  selected: { icon: CheckCircle2, classes: "bg-green-50 text-green-700 border-green-200" },
+  waitlisted: { icon: Clock, classes: "bg-amber-50 text-amber-700 border-amber-200" },
+  rejected: { icon: XCircle, classes: "bg-red-50 text-red-700 border-red-200" },
+  eliminated: { icon: AlertOctagon, classes: "bg-red-50 text-red-700 border-red-200" },
+};
 
 export default function CommitteeDossierPage() {
   const params = useParams<{ studentId: string }>();
@@ -111,9 +119,12 @@ export default function CommitteeDossierPage() {
     .filter(Boolean)
     .join(", ");
 
+  const decision = student.committee_decisions?.decision ?? null;
+  const banner = decision ? DECISION_BANNER[decision] : null;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 pb-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <StudentAvatar photoPath={photoPath} initials={initials} size="size-12" />
           <div>
@@ -131,241 +142,211 @@ export default function CommitteeDossierPage() {
             </p>
           </div>
         </div>
-        <Badge>{student.status.replace(/_/g, " ")}</Badge>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Student information</CardDescription>
-          </CardHeader>
-          <CardContent className="flex gap-4">
-            <StudentAvatar
-              photoPath={photoPath}
-              initials={initials}
-              shape="square"
-              size="size-28 sm:size-32"
-              className="text-2xl shrink-0"
-            />
-            <div className="space-y-1 text-sm">
-              <p>
-                <span className="capitalize">{student.gender}</span>
-                {age != null && <span> · {age} yrs old</span>}
-                {student.grade && <span> · {student.grade}</span>}
-              </p>
-              <p className="flex items-start gap-1.5 text-muted-foreground">
-                <MapPin className="mt-0.5 size-3.5 shrink-0" />
-                <span>{address || student.provinces?.name_en || "—"}</span>
-              </p>
-              <p>School: {student.school_partners?.school_name ?? "—"}</p>
-              {student.ngo_partners?.organization_name && (
-                <p className="flex items-center gap-1.5">
-                  <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
-                  NGO: {student.ngo_partners.organization_name}
-                </p>
+        <div className="flex items-center gap-2">
+          {socialAssessment && (
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-medium",
+                CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
               )}
-              <p>GPA: {student.gpa ?? "—"}</p>
-              {socialAssessment?.health_status && (
-                <p className="flex items-center gap-1.5">
-                  <HeartPulse className="size-3.5 shrink-0 text-muted-foreground" />
-                  Health: {labelFor(HEALTH_OPTS, socialAssessment.health_status)}
-                </p>
-              )}
-              <p className="pt-1">
-                {socialAssessment ? (
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-xs font-medium",
-                      CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
-                    )}
-                  >
-                    {socialAssessment.final_score} pts · {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">No social form yet</span>
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Exam</CardTitle>
-            <CardDescription>
-              {student.exam_results
-                ? `Total ${student.exam_results.total_score} / 400 · rank ${student.exam_results.rank_in_cycle ?? "—"} · ${student.exam_results.pass_status}`
-                : "Not yet entered"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {student.exam_results ? (
-              <ExamScoreChart
-                math={student.exam_results.math_score}
-                english={student.exam_results.english_score}
-                logic={student.exam_results.logic_score}
-                computer={student.exam_results.computer_score}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">No exam scores yet.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Interview</CardTitle>
-            <CardDescription>
-              {student.interviews?.recommendation
-                ? RECOMMENDATION_LABELS[student.interviews.recommendation]
-                : "Not yet entered"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {student.interviews ? (
-              <>
-                <InterviewScoreChart
-                  communication={student.interviews.communication_score ?? 0}
-                  leadership={student.interviews.leadership_score ?? 0}
-                  motivation={student.interviews.motivation_score ?? 0}
-                  confidence={student.interviews.confidence_score ?? 0}
-                  criticalThinking={student.interviews.critical_thinking_score ?? 0}
-                />
-                {student.interviews.comments && (
-                  <p className="text-sm text-muted-foreground">{student.interviews.comments}</p>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">No interview yet.</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Social Form (Home Visit)</CardTitle>
-          <CardDescription>
-            {student.social_assessments.length === 0
-              ? "No visit recorded yet"
-              : `${student.social_assessments.length} visit(s) recorded`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {student.social_assessments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No social form yet.</p>
-          ) : (
-            student.social_assessments.map((assessment, i) => (
-              <div key={assessment.id}>
-                {i > 0 && <div className="mb-6 border-t" />}
-                <SocialFormSummary assessment={assessment} />
-              </div>
-            ))
+            >
+              {socialAssessment.final_score} pts · {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}
+            </span>
           )}
-        </CardContent>
-      </Card>
+          <Badge className="capitalize">{student.status.replace(/_/g, " ")}</Badge>
+        </div>
+      </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Committee Ratings</CardTitle>
-          <CardDescription>Each member rates independently — average shown live</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <RatingAverageChart ratings={student.committee_ratings} />
-          <CommitteeRatingPanel
-            studentId={student.id}
-            cycleId={student.cycle_id}
-            ratings={student.committee_ratings}
-            myUserId={myUserId}
-            canRate={can(role, "recordCommitteeDecision")}
-            onRated={load}
+        <CardContent className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <StudentAvatar
+            photoPath={photoPath}
+            initials={initials}
+            shape="square"
+            size="size-32 sm:size-36"
+            className="text-3xl shrink-0"
           />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Decision</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {student.committee_decisions?.decision ? (
-            <p className="text-sm">
-              Decision: <span className="font-medium capitalize">{student.committee_decisions.decision}</span> on{" "}
-              {student.committee_decisions.decision_date}
-              {student.committee_decisions.poor_level && (
-                <>
-                  {" "}
-                  · Poor Level: <span className="font-medium">{student.committee_decisions.poor_level}</span>
-                </>
-              )}
-              {" "}· Approval: <span className="capitalize">{student.committee_decisions.approval_status}</span>
-            </p>
-          ) : student.status !== "committee_review" ? (
-            <p className="text-sm text-muted-foreground">
-              This case hasn&apos;t been sent to committee yet.{" "}
-              <Link href={`/students/${student.id}`} className={buttonVariants({ variant: "link", className: "px-0" })}>
-                Continue the pipeline
-              </Link>
-            </p>
-          ) : (
-            <RoleGate capability="recordCommitteeDecision">
-              <div className="space-y-4">
-                <div>
-                  <p className="mb-2 text-sm font-medium">
-                    Poor Level <span className="font-normal text-muted-foreground">(A+ = very poor)</span>
-                  </p>
-                  <div className="flex gap-1.5">
-                    {POOR_LEVELS.map((level) => (
-                      <button
-                        key={level}
-                        type="button"
-                        aria-pressed={poorLevel === level}
-                        onClick={() => setPoorLevel(poorLevel === level ? null : level)}
-                        className={cn(
-                          "flex size-10 items-center justify-center rounded-lg border-2 text-sm font-semibold transition-colors",
-                          poorLevel === level
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/40",
-                        )}
-                      >
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button disabled={decidingDecision !== null} onClick={() => handleDecision("selected")}>
-                    Select
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={decidingDecision !== null}
-                    onClick={() => handleDecision("waitlisted")}
-                  >
-                    Waitlist
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={decidingDecision !== null}
-                    onClick={() => handleDecision("rejected")}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    disabled={decidingDecision !== null}
-                    onClick={() => handleDecision("eliminated")}
-                  >
-                    Eliminated
-                  </Button>
-                </div>
+          <div className="grid flex-1 grid-cols-1 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Gender · Age</span>
+              <span className="font-medium capitalize">
+                {student.gender}
+                {age != null && ` · ${age} yrs`}
+                {student.grade && ` · ${student.grade}`}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Wallet className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="text-muted-foreground">GPA</span>
+              <span className="font-medium">{student.gpa ?? "—"}</span>
+            </div>
+            <div className="flex items-start gap-2 sm:col-span-2">
+              <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+              <span className="font-medium">{address || student.provinces?.name_en || "—"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <School className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="font-medium">{student.school_partners?.school_name ?? "—"}</span>
+            </div>
+            {student.ngo_partners?.organization_name && (
+              <div className="flex items-center gap-2">
+                <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="font-medium">{student.ngo_partners.organization_name}</span>
               </div>
-            </RoleGate>
-          )}
+            )}
+            {socialAssessment?.health_status && (
+              <div className="flex items-center gap-2">
+                <HeartPulse className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="font-medium">{labelFor(HEALTH_OPTS, socialAssessment.health_status)}</span>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Social Form (Home Visit)</CardTitle>
+              <CardDescription>
+                {student.social_assessments.length === 0
+                  ? "No visit recorded yet"
+                  : `${student.social_assessments.length} visit(s) recorded`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {student.social_assessments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No social form yet.</p>
+              ) : (
+                student.social_assessments.map((assessment, i) => (
+                  <div key={assessment.id}>
+                    {i > 0 && <div className="mb-6 border-t" />}
+                    <SocialFormSummary assessment={assessment} />
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Committee Ratings</CardTitle>
+              <CardDescription>Each member rates independently — average shown live</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <RatingAverageChart ratings={student.committee_ratings} />
+              <CommitteeRatingPanel
+                studentId={student.id}
+                cycleId={student.cycle_id}
+                ratings={student.committee_ratings}
+                myUserId={myUserId}
+                canRate={can(role, "recordCommitteeDecision")}
+                onRated={load}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:sticky lg:top-6 lg:col-span-1 lg:self-start">
+          <Card>
+            <CardHeader>
+              <CardTitle>Decision</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {student.committee_decisions?.decision && banner ? (
+                <div className={cn("space-y-2 rounded-lg border p-3", banner.classes)}>
+                  <div className="flex items-center gap-2 font-medium capitalize">
+                    <banner.icon className="size-4 shrink-0" />
+                    {student.committee_decisions.decision}
+                  </div>
+                  <dl className="space-y-1 text-xs">
+                    <div className="flex justify-between gap-3">
+                      <dt>Decided on</dt>
+                      <dd className="font-medium">{student.committee_decisions.decision_date}</dd>
+                    </div>
+                    {student.committee_decisions.poor_level && (
+                      <div className="flex justify-between gap-3">
+                        <dt>Poor Level</dt>
+                        <dd className="font-medium">{student.committee_decisions.poor_level}</dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between gap-3">
+                      <dt>Approval</dt>
+                      <dd className="font-medium capitalize">{student.committee_decisions.approval_status}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ) : student.status !== "committee_review" ? (
+                <p className="text-sm text-muted-foreground">
+                  This case hasn&apos;t been sent to committee yet.{" "}
+                  <Link
+                    href={`/students/${student.id}`}
+                    className={buttonVariants({ variant: "link", className: "px-0" })}
+                  >
+                    Continue the pipeline
+                  </Link>
+                </p>
+              ) : (
+                <RoleGate capability="recordCommitteeDecision">
+                  <div className="space-y-5">
+                    <div>
+                      <p className="mb-2 text-sm font-medium">
+                        Poor Level <span className="font-normal text-muted-foreground">(A+ = very poor)</span>
+                      </p>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {POOR_LEVELS.map((level) => (
+                          <button
+                            key={level}
+                            type="button"
+                            aria-pressed={poorLevel === level}
+                            onClick={() => setPoorLevel(poorLevel === level ? null : level)}
+                            className={cn(
+                              "flex h-10 items-center justify-center rounded-lg border-2 text-sm font-semibold transition-colors",
+                              poorLevel === level
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-muted-foreground hover:border-primary/40",
+                            )}
+                          >
+                            {level}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button disabled={decidingDecision !== null} onClick={() => handleDecision("selected")}>
+                        Select
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={decidingDecision !== null}
+                        onClick={() => handleDecision("waitlisted")}
+                      >
+                        Waitlist
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={decidingDecision !== null}
+                        onClick={() => handleDecision("rejected")}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        disabled={decidingDecision !== null}
+                        onClick={() => handleDecision("eliminated")}
+                      >
+                        Eliminated
+                      </Button>
+                    </div>
+                  </div>
+                </RoleGate>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
