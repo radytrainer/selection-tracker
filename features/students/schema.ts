@@ -14,6 +14,9 @@ export const studentFormSchema = z.object({
 
   school_id: z.string().uuid().optional().or(z.literal("")),
   referred_by_ngo_id: z.string().uuid().optional().or(z.literal("")),
+  information_session: z.string().optional().or(z.literal("")),
+  exam_center: z.string().optional().or(z.literal("")),
+  eligible_for_social_investigation: z.boolean(),
   grade: z.string().optional().or(z.literal("")),
   // Kept as strings (native input values) rather than z.coerce.number() —
   // mixing coercion into a zodResolver schema makes useForm's input/output

@@ -300,6 +300,9 @@ export type Database = {
           family_income_monthly: number | null;
           siblings_count: number | null;
           referred_by_ngo_id: string | null;
+          information_session: string | null;
+          exam_center: string | null;
+          eligible_for_social_investigation: boolean;
           status:
             | "registered"
             | "exam_completed"
@@ -340,6 +343,9 @@ export type Database = {
           family_income_monthly?: number | null;
           siblings_count?: number | null;
           referred_by_ngo_id?: string | null;
+          information_session?: string | null;
+          exam_center?: string | null;
+          eligible_for_social_investigation?: boolean;
           status?:
             | "registered"
             | "exam_completed"

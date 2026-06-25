@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { createStudent, generateStudentCode } from "@/services/studentService";
 import { getActiveCycle, listProvinces, listSchools } from "@/services/lookupService";
-import { listNgos } from "@/services/ngoService";
+import { createNgo, listNgos } from "@/services/ngoService";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,6 +27,9 @@ const TEMPLATE_HEADERS = [
   "Village",
   "School",
   "Referring NGO",
+  "Information Session",
+  "Exam Center",
+  "Eligible for Social Investigation",
   "Grade",
   "GPA",
   "English Level",
@@ -49,6 +52,9 @@ const TEMPLATE_EXAMPLE = [
   "Chrey",
   "",
   "",
+  "EDM - Banteaymeanchey",
+  "EDM Banteaymeanchey 14th AM",
+  "1",
   "10",
   "3.5",
   "intermediate",
@@ -85,7 +91,11 @@ const HEADER_ALIASES: Record<string, string> = {
   village: "village_name",
   school: "school",
   referring_ngo: "ngo",
+  following_ngo: "ngo",
   ngo: "ngo",
+  information_session: "information_session",
+  exam_center: "exam_center",
+  eligible_for_social_investigation: "eligible_for_social_investigation",
   grade: "grade",
   gpa: "gpa",
   english_level: "english_level",
@@ -111,6 +121,11 @@ function normalizeEnglishLevel(raw: string): "none" | "beginner" | "intermediate
     return v as "none" | "beginner" | "intermediate" | "advanced";
   }
   return null;
+}
+
+function normalizeFlag(raw: string): boolean {
+  const v = raw.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "y";
 }
 
 function normalizeDob(raw: string): string | null {
@@ -192,8 +207,16 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
 
       if (normalized.ngo) {
         const id = ngoByName.get(normalized.ngo.trim().toLowerCase());
-        if (!id) warnings.push(`NGO "${normalized.ngo}" not found, left blank`);
-        normalized.referred_by_ngo_id = id ?? "";
+        if (id) normalized.referred_by_ngo_id = id;
+        else warnings.push(`NGO "${normalized.ngo}" not found — will be created automatically`);
+      }
+
+      if (normalized.eligible_for_social_investigation) {
+        normalized.eligible_for_social_investigation = normalizeFlag(
+          normalized.eligible_for_social_investigation,
+        )
+          ? "1"
+          : "";
       }
 
       return { rowNumber: index + 2, values: normalized, errors, warnings };
@@ -218,10 +241,32 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
         return;
       }
 
+      const ngos = await listNgos();
+      const ngoByName = new Map(ngos.map((n) => [n.organization_name.trim().toLowerCase(), n.id]));
+
       for (const row of validRows) {
         const v = row.values;
         const name = `${v.first_name} ${v.last_name}`;
+        let ngoNote = "";
         try {
+          let ngoId = v.referred_by_ngo_id || "";
+          if (!ngoId && v.ngo) {
+            const key = v.ngo.trim().toLowerCase();
+            const existing = ngoByName.get(key);
+            if (existing) {
+              ngoId = existing;
+            } else {
+              try {
+                const created = await createNgo({ organization_name: v.ngo.trim() });
+                ngoByName.set(key, created.id);
+                ngoId = created.id;
+                ngoNote = ` (created NGO partner "${v.ngo.trim()}")`;
+              } catch {
+                ngoNote = ` (could not create NGO "${v.ngo.trim()}" — referral left blank)`;
+              }
+            }
+          }
+
           const studentCode = await generateStudentCode(cycle.year);
           const student = await createStudent({
             student_code: studentCode,
@@ -236,7 +281,10 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
             commune_name: v.commune_name || null,
             village_name: v.village_name || null,
             school_id: v.school_id || null,
-            referred_by_ngo_id: v.referred_by_ngo_id || null,
+            referred_by_ngo_id: ngoId || null,
+            information_session: v.information_session || null,
+            exam_center: v.exam_center || null,
+            eligible_for_social_investigation: normalizeFlag(v.eligible_for_social_investigation || ""),
             grade: v.grade || null,
             gpa: v.gpa ? Number(v.gpa) : null,
             english_level: (v.english_level || null) as
@@ -255,7 +303,7 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
             rowNumber: row.rowNumber,
             name,
             ok: true,
-            message: `Created ${student.student_code}`,
+            message: `Created ${student.student_code}${ngoNote}`,
           });
         } catch (error) {
           importResults.push({
@@ -313,8 +361,10 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="text-sm text-muted-foreground">
               Columns: First Name, Last Name, Gender, Date of Birth (required) — plus Phone,
-              Province, District, Commune, Village, School, Referring NGO, Grade, GPA, English
-              Level, and family info (optional).
+              Province, District, Commune, Village, School, Referring NGO, Information Session,
+              Exam Center, Eligible for Social Investigation, Grade, GPA, English Level, and
+              family info (optional). NGO names that don&apos;t match an existing partner are
+              created automatically.
             </div>
             <Button variant="ghost" size="sm" onClick={downloadTemplate}>
               <Download className="size-4" />

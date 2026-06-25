@@ -12,6 +12,7 @@ import { validateStudentPhotoFile } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -63,6 +64,9 @@ const STEPS = [
     fields: [
       "school_id",
       "referred_by_ngo_id",
+      "information_session",
+      "exam_center",
+      "eligible_for_social_investigation",
       "grade",
       "gpa",
       "english_level",
@@ -131,6 +135,9 @@ export function StudentForm({
       village_name: "",
       school_id: "",
       referred_by_ngo_id: "",
+      information_session: "",
+      exam_center: "",
+      eligible_for_social_investigation: false,
       grade: "",
       father_name: "",
       mother_name: "",
@@ -445,6 +452,45 @@ export function StudentForm({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="information_session"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Information Session</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. EDM - Banteaymeanchey" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="exam_center"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Exam Center</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. EDM Banteaymeanchey 14th AM" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="eligible_for_social_investigation"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center gap-2 sm:col-span-2">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormLabel className="font-normal">Eligible for Social Investigation</FormLabel>
                   <FormMessage />
                 </FormItem>
               )}
