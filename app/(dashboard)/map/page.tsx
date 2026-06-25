@@ -22,7 +22,7 @@ const CambodiaMap = dynamic(
 
 const LAYER_FILTER_OPTIONS: MapLayerFilter[] = ["all", "students", "ngos", "schools"];
 const LAYER_FILTER_LABELS: Record<MapLayerFilter, string> = {
-  all: "Everything",
+  all: "All",
   students: "Students",
   ngos: "NGO",
   schools: "Schools",
@@ -78,7 +78,7 @@ export default function MapPage() {
         />
       )}
 
-      <div className="absolute top-3 left-3 z-[1000] flex flex-wrap items-start gap-3">
+      <div className="absolute top-3 left-3 z-[1000] flex flex-col items-start gap-3">
         <div className="space-y-1">
           <p className="px-0.5 text-xs font-medium text-muted-foreground">Show</p>
           <MapFilterGroup
@@ -86,6 +86,7 @@ export default function MapPage() {
             options={LAYER_FILTER_OPTIONS}
             labels={LAYER_FILTER_LABELS}
             onChange={setLayerFilter}
+            vertical
           />
         </div>
         <div className="space-y-1">
@@ -95,6 +96,7 @@ export default function MapPage() {
             options={GENDER_FILTER_OPTIONS}
             labels={GENDER_FILTER_LABELS}
             onChange={setGenderFilter}
+            vertical
           />
         </div>
       </div>
