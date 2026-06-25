@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Gavel, HeartHandshake, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +47,41 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
     {
       id: "name",
       header: "Name",
-      cell: ({ row }) => `${row.original.first_name} ${row.original.last_name}`,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5">
+          <span>
+            {row.original.first_name} {row.original.last_name}
+          </span>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Link
+                  href={`/students/${row.original.id}/social-form`}
+                  className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border bg-muted text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                />
+              }
+            >
+              <HeartHandshake className="size-3" />
+            </TooltipTrigger>
+            <TooltipContent>Social Form</TooltipContent>
+          </Tooltip>
+          {!PRE_HOME_VISIT_STATUSES.has(row.original.status) && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Link
+                    href={`/committee/${row.original.id}`}
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border bg-muted text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                  />
+                }
+              >
+                <Gavel className="size-3" />
+              </TooltipTrigger>
+              <TooltipContent>Committee</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      ),
     },
     {
       accessorKey: "gender",
@@ -88,34 +122,6 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
       header: "",
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Link
-                  href={`/students/${row.original.id}/social-form`}
-                  className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-                />
-              }
-            >
-              <HeartHandshake className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent>Social Form</TooltipContent>
-          </Tooltip>
-          {!PRE_HOME_VISIT_STATUSES.has(row.original.status) && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Link
-                    href={`/committee/${row.original.id}`}
-                    className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-                  />
-                }
-              >
-                <Gavel className="size-4" />
-              </TooltipTrigger>
-              <TooltipContent>Committee</TooltipContent>
-            </Tooltip>
-          )}
           <RoleGate capability="createEditStudents">
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>

@@ -188,10 +188,11 @@ export async function softDeleteStudent(id: string) {
   if (error) throw error;
 }
 
-/** Generates the next sequential student code for a cycle, e.g. SST-2026-000123. */
+/** Generates the next sequential student code for a cycle, e.g. ST-26-0123. */
 export async function generateStudentCode(cycleYear: number) {
   const supabase = createClient();
-  const prefix = `SST-${cycleYear}-`;
+  const shortYear = String(cycleYear).slice(-2);
+  const prefix = `ST-${shortYear}-`;
   const { count, error } = await supabase
     .from("students")
     .select("id", { count: "exact", head: true })
@@ -199,5 +200,5 @@ export async function generateStudentCode(cycleYear: number) {
 
   if (error) throw error;
   const next = (count ?? 0) + 1;
-  return `${prefix}${String(next).padStart(6, "0")}`;
+  return `${prefix}${String(next).padStart(4, "0")}`;
 }
