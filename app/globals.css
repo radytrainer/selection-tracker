@@ -145,6 +145,15 @@
   display: none;
 }
 
+/* The Show/Gender filter overlay in app/(dashboard)/map/page.tsx sits at
+   z-[1000] above the map so it stays clickable, but Leaflet's own popup
+   pane defaults to z-index 700 — a marker near that top-left corner opened
+   a popup that rendered underneath the filters, hiding half its content.
+   Push the popup (and its matching close-button pane) above the overlay. */
+.leaflet-popup-pane {
+  z-index: 1100;
+}
+
 /* Horizontally-scrollable strips (tabs on narrow screens, the Social Form
    step navigator) — keep the swipe/scroll behavior, hide the native
    scrollbar chrome that otherwise looks out of place on a touch UI. */
