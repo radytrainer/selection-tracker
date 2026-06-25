@@ -72,9 +72,10 @@ export function NgoYearlyChart({ stats }: { stats: NgoYearlyStat[] }) {
       <div className="flex flex-wrap gap-3">
         <Select value={yearFilter} onValueChange={(value) => setYearFilter(value ?? "")}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="All Years">{(value: string) => value}</SelectValue>
+            <SelectValue placeholder="All Years">{(value: string) => value || "All Years"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All Years</SelectItem>
             {years.map((year) => (
               <SelectItem key={year} value={String(year)}>
                 {year}
@@ -85,10 +86,11 @@ export function NgoYearlyChart({ stats }: { stats: NgoYearlyStat[] }) {
         <Select value={ngoFilter} onValueChange={(value) => setNgoFilter(value ?? "")}>
           <SelectTrigger className="w-56">
             <SelectValue placeholder="All NGOs">
-              {(value: string) => ngoOptions.find((n) => n.id === value)?.name}
+              {(value: string) => (value ? ngoOptions.find((n) => n.id === value)?.name : "All NGOs")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All NGOs</SelectItem>
             {ngoOptions.map((ngo) => (
               <SelectItem key={ngo.id} value={ngo.id}>
                 {ngo.name}

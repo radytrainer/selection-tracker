@@ -71,10 +71,11 @@ export default function NgosPage() {
         <Select value={outreachFilter} onValueChange={(value) => setOutreachFilter(value ?? "")}>
           <SelectTrigger className="w-56">
             <SelectValue placeholder="All Outreach Statuses">
-              {(value: string) => OUTREACH_STATUS_LABELS[value as OutreachStatus] ?? value}
+              {(value: string) => (value ? OUTREACH_STATUS_LABELS[value as OutreachStatus] ?? value : "All Outreach Statuses")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All Outreach Statuses</SelectItem>
             {OUTREACH_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
                 {OUTREACH_STATUS_LABELS[status]}

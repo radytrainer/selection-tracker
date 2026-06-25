@@ -96,10 +96,11 @@ export default function StudentsPage() {
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All statuses">
-              {(value: string) => value.replace(/_/g, " ")}
+              {(value: string) => (value ? value.replace(/_/g, " ") : "All statuses")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All statuses</SelectItem>
             {STUDENT_STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
                 {s.replace(/_/g, " ")}
@@ -116,10 +117,11 @@ export default function StudentsPage() {
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All provinces">
-              {(value: string) => provinces.find((p) => p.id === value)?.name_en}
+              {(value: string) => (value ? provinces.find((p) => p.id === value)?.name_en : "All provinces")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All provinces</SelectItem>
             {provinces.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name_en}
