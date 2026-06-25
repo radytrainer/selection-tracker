@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Building2, CheckCircle2, HeartHandshake, MapPin, User } from "lucide-react";
 import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip, ZoomControl } from "react-leaflet";
 import { CAMBODIA_BOUNDS, CAMBODIA_CENTER, PROVINCE_COORDINATES } from "@/lib/cambodia-provinces";
 import type { MapPartner, ProvinceStats } from "@/services/mapService";
@@ -124,20 +125,71 @@ export function CambodiaMap({
               {value}
             </Tooltip>
             <Popup>
-              <div className="space-y-0.5 text-xs">
-                <p className="font-semibold">{province.nameEn}</p>
-                <p>Total Students: {province.totalStudents}</p>
-                <p>Male: {province.maleStudents} · Female: {province.femaleStudents}</p>
-                <p>
-                  From NGO: {province.ngoStudents} (Male: {province.ngoMaleStudents} · Female:{" "}
-                  {province.ngoFemaleStudents})
-                </p>
-                <p>
-                  Non-NGO: {province.nonNgoStudents} (Male: {province.nonNgoMaleStudents} · Female:{" "}
-                  {province.nonNgoFemaleStudents})
-                </p>
-                <p>Home Visit Completed: {province.homeVisitCompleted}</p>
-                <p>Final Selected: {province.selectedStudents}</p>
+              <div className="w-56 space-y-2.5 py-0.5">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="size-4 shrink-0 text-primary" />
+                  <p className="text-sm font-semibold">{province.nameEn}</p>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-primary/5 px-2.5 py-1.5">
+                  <span className="text-xs text-muted-foreground">Total Students</span>
+                  <span className="text-base font-bold text-primary">{province.totalStudents}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block size-2 rounded-full bg-blue-500" />
+                    Male
+                  </span>
+                  <span className="font-medium">{province.maleStudents}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block size-2 rounded-full bg-pink-500" />
+                    Female
+                  </span>
+                  <span className="font-medium">{province.femaleStudents}</span>
+                </div>
+
+                <div className="space-y-1.5 border-t pt-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Building2 className="size-3.5 text-indigo-600" />
+                      From NGO
+                    </span>
+                    <span className="font-semibold">{province.ngoStudents}</span>
+                  </div>
+                  <p className="pl-5 text-[11px] text-muted-foreground">
+                    Male {province.ngoMaleStudents} · Female {province.ngoFemaleStudents}
+                  </p>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <User className="size-3.5 text-slate-500" />
+                      Non-NGO
+                    </span>
+                    <span className="font-semibold">{province.nonNgoStudents}</span>
+                  </div>
+                  <p className="pl-5 text-[11px] text-muted-foreground">
+                    Male {province.nonNgoMaleStudents} · Female {province.nonNgoFemaleStudents}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5 border-t pt-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <HeartHandshake className="size-3.5 text-pink-600" />
+                      Home Visit Completed
+                    </span>
+                    <span className="font-medium">{province.homeVisitCompleted}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="size-3.5 text-green-600" />
+                      Final Selected
+                    </span>
+                    <span className="font-semibold text-green-700">{province.selectedStudents}</span>
+                  </div>
+                </div>
               </div>
             </Popup>
           </CircleMarker>

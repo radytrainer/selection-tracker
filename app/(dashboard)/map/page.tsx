@@ -30,7 +30,7 @@ const LAYER_FILTER_LABELS: Record<MapLayerFilter, string> = {
 
 const GENDER_FILTER_OPTIONS: MapGenderFilter[] = ["all", "male", "female", "other"];
 const GENDER_FILTER_LABELS: Record<MapGenderFilter, string> = {
-  all: "All Genders",
+  all: "All",
   male: "Male",
   female: "Female",
   other: "Other",
