@@ -183,9 +183,11 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
       if (!gender) errors.push("Gender must be male, female, or other");
       else normalized.gender = gender;
 
-      const dob = normalized.dob ? normalizeDob(normalized.dob) : null;
-      if (!dob) errors.push("Date of birth is required and must be a valid date");
-      else normalized.dob = dob;
+      if (normalized.dob) {
+        const dob = normalizeDob(normalized.dob);
+        if (!dob) warnings.push(`Date of birth "${normalized.dob}" is not a valid date, left blank`);
+        normalized.dob = dob ?? "";
+      }
 
       if (normalized.english_level) {
         const level = normalizeEnglishLevel(normalized.english_level);
@@ -274,7 +276,7 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
             first_name: v.first_name,
             last_name: v.last_name,
             gender: v.gender as "male" | "female" | "other",
-            dob: v.dob,
+            dob: v.dob || null,
             phone: v.phone || null,
             province_id: v.province_id || null,
             district_name: v.district_name || null,
@@ -360,7 +362,7 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
         <div className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="text-sm text-muted-foreground">
-              Columns: First Name, Last Name, Gender, Date of Birth (required) — plus Phone,
+              Columns: First Name, Last Name, Gender (required) — plus Date of Birth, Phone,
               Province, District, Commune, Village, School, Referring NGO, Information Session,
               Exam Center, Eligible for Social Investigation, Grade, GPA, English Level, and
               family info (optional). NGO names that don&apos;t match an existing partner are

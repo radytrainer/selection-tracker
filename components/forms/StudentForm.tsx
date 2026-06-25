@@ -37,13 +37,6 @@ const GENDER_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-const ENGLISH_LEVEL_LABELS: Record<string, string> = {
-  none: "None",
-  beginner: "Beginner",
-  intermediate: "Intermediate",
-  advanced: "Advanced",
-};
-
 const STEPS = [
   {
     key: "personal",
@@ -67,9 +60,6 @@ const STEPS = [
       "information_session",
       "exam_center",
       "eligible_for_social_investigation",
-      "grade",
-      "gpa",
-      "english_level",
     ] as FieldPath<StudentFormValues>[],
   },
   {
@@ -138,7 +128,6 @@ export function StudentForm({
       information_session: "",
       exam_center: "",
       eligible_for_social_investigation: false,
-      grade: "",
       father_name: "",
       mother_name: "",
       parent_occupation: "",
@@ -308,7 +297,7 @@ export function StudentForm({
               name="dob"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date of Birth</FormLabel>
+                  <FormLabel>Date of Birth (optional)</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -491,57 +480,6 @@ export function StudentForm({
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <FormLabel className="font-normal">Eligible for Social Investigation</FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="grade"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Grade</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="gpa"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>GPA</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" min="0" max="4" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="english_level"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>English Level</FormLabel>
-                  <Select value={field.value ?? ""} onValueChange={(value) => field.onChange(value ?? "")}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select level">
-                          {(value: string) => ENGLISH_LEVEL_LABELS[value] ?? value}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

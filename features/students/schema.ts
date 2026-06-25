@@ -4,7 +4,7 @@ export const studentFormSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   gender: z.enum(["male", "female", "other"]),
-  dob: z.string().min(1, "Date of birth is required"),
+  dob: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
 
   province_id: z.string().uuid().optional().or(z.literal("")),
@@ -17,13 +17,6 @@ export const studentFormSchema = z.object({
   information_session: z.string().optional().or(z.literal("")),
   exam_center: z.string().optional().or(z.literal("")),
   eligible_for_social_investigation: z.boolean(),
-  grade: z.string().optional().or(z.literal("")),
-  // Kept as strings (native input values) rather than z.coerce.number() —
-  // mixing coercion into a zodResolver schema makes useForm's input/output
-  // generics diverge and breaks typing throughout the form tree. Convert to
-  // numbers at the call site (see students/new/page.tsx) instead.
-  gpa: z.string().optional().or(z.literal("")),
-  english_level: z.enum(["none", "beginner", "intermediate", "advanced"]).optional(),
 
   father_name: z.string().optional().or(z.literal("")),
   mother_name: z.string().optional().or(z.literal("")),

@@ -284,7 +284,7 @@ export type Database = {
           first_name: string;
           last_name: string;
           gender: "male" | "female" | "other";
-          dob: string;
+          dob: string | null;
           phone: string | null;
           province_id: string | null;
           district_name: string | null;
@@ -327,7 +327,7 @@ export type Database = {
           first_name: string;
           last_name: string;
           gender: "male" | "female" | "other";
-          dob: string;
+          dob?: string | null;
           phone?: string | null;
           province_id?: string | null;
           district_name?: string | null;

@@ -27,7 +27,8 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
   dropped_out: "destructive",
 };
 
-function calculateAge(dob: string): number | null {
+function calculateAge(dob: string | null): number | null {
+  if (!dob) return null;
   const birthDate = new Date(dob);
   if (Number.isNaN(birthDate.getTime())) return null;
   const today = new Date();
