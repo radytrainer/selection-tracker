@@ -9,6 +9,7 @@ import {
   GraduationCap,
   HeartPulse,
   Home as HomeIcon,
+  ListChecks,
   Package,
   ShieldAlert,
   Users,
@@ -18,7 +19,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { socialFormSchema, type SocialFormValues } from "@/features/social-form/schema";
-import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, computeSocialFormScore } from "@/features/social-form/scoring";
+import {
+  CATEGORY_BADGE_CLASSES,
+  CATEGORY_LABELS,
+  computeSocialFormScore,
+  computeVacScore,
+  VAC_CATEGORIES,
+  VAC_TIER_BADGE_CLASSES,
+  VAC_TIER_LABELS,
+} from "@/features/social-form/scoring";
 import {
   ACADEMIC_OPTS,
   ASSET_OPTS,
@@ -60,6 +69,7 @@ const STEPS: { title: string; icon: LucideIcon }[] = [
   { title: "Debt", icon: CreditCard },
   { title: "Farming & Plantation", icon: Wheat },
   { title: "Vulnerability & Husbandry", icon: ShieldAlert },
+  { title: "Vulnerability Checklist", icon: ListChecks },
   { title: "Summary", icon: ClipboardCheck },
 ];
 
@@ -74,6 +84,7 @@ const STEP_FIELDS: (keyof SocialFormValues)[][] = [
   ["debt_band"],
   ["farm_land_band", "farm_income_band", "plantation_land_band", "plantation_income_band"],
   ["husbandry_band"],
+  VAC_CATEGORIES.map((c) => c.field),
   [],
 ];
 
@@ -164,6 +175,7 @@ export function SocialForm({
   }, [JSON.stringify(values)]);
 
   const score = useMemo(() => computeSocialFormScore(values), [values]);
+  const vacScore = useMemo(() => computeVacScore(values), [values]);
 
   const stepProgress = useMemo(
     () =>
@@ -285,6 +297,15 @@ export function SocialForm({
         },
         { label: "Husbandry", value: labelFor(HUSBANDRY_OPTS, values.husbandry_band) ?? "" },
       ].filter((r) => r.value),
+    },
+    {
+      step: 9,
+      title: "Vulnerability Checklist",
+      icon: ListChecks,
+      rows: VAC_CATEGORIES.map((c) => ({
+        label: c.label,
+        value: c.options.find((o) => o.value === values[c.field])?.label ?? "",
+      })).filter((r) => r.value),
     },
   ];
 
@@ -786,12 +807,44 @@ export function SocialForm({
 
         {step === 9 && (
           <div className="space-y-5">
+            <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+              <p className="text-xs text-muted-foreground">
+                Selection team evaluation — rate each category as it stands today.
+              </p>
+              <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-xs font-medium", VAC_TIER_BADGE_CLASSES[vacScore.tier])}>
+                {vacScore.totalScore}/36 · {VAC_TIER_LABELS[vacScore.tier]}
+              </span>
+            </div>
+            {VAC_CATEGORIES.map((category, i) => (
+              <div key={category.field}>
+                <SectionHeading icon={ListChecks} title={`${i + 1}. ${category.label}`} />
+                <ChoiceGroup
+                  layout="list"
+                  value={form.watch(category.field)}
+                  onChange={(v) => form.setValue(category.field, v)}
+                  options={category.options.map((o) => ({ value: o.value, label: o.label, points: o.value }))}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {step === 10 && (
+          <div className="space-y-5">
             <div className={cn("rounded-xl border-2 p-4", CATEGORY_BADGE_CLASSES[score.category], "border-current/20")}>
               <p className="text-xs font-medium uppercase tracking-wide opacity-70">Final Assessment</p>
               <p className="mt-1 text-2xl font-semibold">{CATEGORY_LABELS[score.category]}</p>
               <p className="mt-1 text-sm opacity-80">
                 {score.totalScore} pts total − {score.vulnerabilityDeduction} vulnerability ={" "}
                 <span className="font-medium">{score.finalScore} pts</span>
+              </p>
+            </div>
+
+            <div className={cn("rounded-xl border-2 p-4", VAC_TIER_BADGE_CLASSES[vacScore.tier], "border-current/20")}>
+              <p className="text-xs font-medium uppercase tracking-wide opacity-70">Vulnerability Checklist</p>
+              <p className="mt-1 text-2xl font-semibold">{VAC_TIER_LABELS[vacScore.tier]}</p>
+              <p className="mt-1 text-sm opacity-80">
+                <span className="font-medium">{vacScore.totalScore}</span> / 36 pts across 12 categories
               </p>
             </div>
 

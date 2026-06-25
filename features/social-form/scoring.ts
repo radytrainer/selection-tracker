@@ -155,3 +155,169 @@ export function computeSocialFormScore(input: SocialFormScoreInput) {
     category: categoryFor(finalScore),
   };
 }
+
+/**
+ * The NGO's separate 12-category "Vulnerability Assessment Checklist for
+ * Poor Families" — filled in by the selection team at the end of the home
+ * visit, alongside (not instead of) the scoring above. Low=3/Medium=2/
+ * High=1, so unlike the rest of this file a LOWER total here means more
+ * vulnerable, matching the source document's own scoring guide.
+ */
+export const VAC_FIELDS = [
+  "vac_income_employment",
+  "vac_food_security",
+  "vac_housing_conditions",
+  "vac_health_services",
+  "vac_education",
+  "vac_debt_finance",
+  "vac_assets_livelihoods",
+  "vac_social_protection",
+  "vac_family_structure",
+  "vac_shocks_risks",
+  "vac_water_sanitation",
+  "vac_psychological_vulnerability",
+] as const;
+
+export type VacField = (typeof VAC_FIELDS)[number];
+export type VacScore = 1 | 2 | 3;
+
+export const VAC_CATEGORIES: {
+  field: VacField;
+  label: string;
+  options: { value: VacScore; label: string }[];
+}[] = [
+  {
+    field: "vac_income_employment",
+    label: "Income & Employment",
+    options: [
+      { value: 3, label: "Stable income, covers needs" },
+      { value: 2, label: "Irregular income, sometimes insufficient" },
+      { value: 1, label: "No regular income, cannot cover basics" },
+    ],
+  },
+  {
+    field: "vac_food_security",
+    label: "Food Security",
+    options: [
+      { value: 3, label: "Enough food, balanced diet" },
+      { value: 2, label: "Sometimes insufficient/low quality" },
+      { value: 1, label: "Frequent shortages, malnutrition signs" },
+    ],
+  },
+  {
+    field: "vac_housing_conditions",
+    label: "Housing Conditions",
+    options: [
+      { value: 3, label: "Safe house, clean water, electricity" },
+      { value: 2, label: "Inadequate housing, partial utilities" },
+      { value: 1, label: "Unsafe shelter, no utilities" },
+    ],
+  },
+  {
+    field: "vac_health_services",
+    label: "Health & Services",
+    options: [
+      { value: 3, label: "Healthy, access to clinics" },
+      { value: 2, label: "Some health issues, limited access" },
+      { value: 1, label: "Serious illness/disability, no access" },
+    ],
+  },
+  {
+    field: "vac_education",
+    label: "Education",
+    options: [
+      { value: 3, label: "All children in school" },
+      { value: 2, label: "Some children miss/drop out" },
+      { value: 1, label: "Most children not in school, no literacy" },
+    ],
+  },
+  {
+    field: "vac_debt_finance",
+    label: "Debt & Finance",
+    options: [
+      { value: 3, label: "No or manageable debt" },
+      { value: 2, label: "Some debt, repayable with difficulty" },
+      { value: 1, label: "Heavy debt, borrowing for daily food" },
+    ],
+  },
+  {
+    field: "vac_assets_livelihoods",
+    label: "Assets & Livelihoods",
+    options: [
+      { value: 3, label: "Own land/livestock/tools" },
+      { value: 2, label: "Few assets, at risk of loss" },
+      { value: 1, label: "No assets, no land/livelihood means" },
+    ],
+  },
+  {
+    field: "vac_social_protection",
+    label: "Social Protection",
+    options: [
+      { value: 3, label: "Enrolled in programs" },
+      { value: 2, label: "Limited support" },
+      { value: 1, label: "No protection, excluded from programs" },
+    ],
+  },
+  {
+    field: "vac_family_structure",
+    label: "Family Structure",
+    options: [
+      { value: 3, label: "Balanced earners/dependents" },
+      { value: 2, label: "Many dependents, some support" },
+      { value: 1, label: "Single parent/elderly/disabled, no support" },
+    ],
+  },
+  {
+    field: "vac_shocks_risks",
+    label: "Shocks & Risks",
+    options: [
+      { value: 3, label: "Resilient, some savings" },
+      { value: 2, label: "Some vulnerability" },
+      { value: 1, label: "One shock could cause crisis" },
+    ],
+  },
+  {
+    field: "vac_water_sanitation",
+    label: "Water & Sanitation",
+    options: [
+      { value: 3, label: "Safe water + sanitation" },
+      { value: 2, label: "Safe water but poor sanitation" },
+      { value: 1, label: "No safe water or sanitation" },
+    ],
+  },
+  {
+    field: "vac_psychological_vulnerability",
+    label: "Psychological Vulnerability",
+    options: [
+      { value: 3, label: "Family copes well with stress" },
+      { value: 2, label: "High stress, weak coping" },
+      { value: 1, label: "Severe stress, no coping mechanisms" },
+    ],
+  },
+];
+
+export type VacTier = "high" | "moderate" | "low";
+
+export const VAC_TIER_LABELS: Record<VacTier, string> = {
+  high: "High Vulnerability",
+  moderate: "Moderate Vulnerability",
+  low: "Low Vulnerability",
+};
+
+export const VAC_TIER_BADGE_CLASSES: Record<VacTier, string> = {
+  high: "bg-red-100 text-red-700",
+  moderate: "bg-amber-100 text-amber-700",
+  low: "bg-green-100 text-green-700",
+};
+
+/** Per the source document's scoring guide: 10–18 High, 18–25 Moderate, 25–36 Low. */
+export function vacTierFor(totalScore: number): VacTier {
+  if (totalScore <= 18) return "high";
+  if (totalScore <= 25) return "moderate";
+  return "low";
+}
+
+export function computeVacScore(input: Partial<Record<VacField, number | null | undefined>>) {
+  const totalScore = VAC_FIELDS.reduce((sum, field) => sum + (input[field] ?? 0), 0);
+  return { totalScore, tier: vacTierFor(totalScore) };
+}

@@ -2,6 +2,7 @@ import {
   CreditCard,
   HeartPulse,
   Home as HomeIcon,
+  ListChecks,
   Package,
   ShieldAlert,
   Users,
@@ -9,7 +10,15 @@ import {
   Wheat,
   type LucideIcon,
 } from "lucide-react";
-import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import {
+  CATEGORY_BADGE_CLASSES,
+  CATEGORY_LABELS,
+  VAC_CATEGORIES,
+  VAC_TIER_BADGE_CLASSES,
+  VAC_TIER_LABELS,
+  vacTierFor,
+  type SocialFormCategory,
+} from "@/features/social-form/scoring";
 import {
   ACADEMIC_OPTS,
   ASSET_RANK_LABELS,
@@ -120,6 +129,11 @@ function buildSections(a: SocialAssessmentRow) {
 export function SocialFormSummary({ assessment }: { assessment: SocialAssessmentRow }) {
   const sections = buildSections(assessment);
   const category = assessment.category as SocialFormCategory;
+  const vacRows = VAC_CATEGORIES.map((c) => ({
+    label: c.label,
+    value: c.options.find((o) => o.value === assessment[c.field])?.label ?? "",
+  })).filter((r) => r.value);
+  const vacTier = assessment.vac_total_score != null ? vacTierFor(assessment.vac_total_score) : null;
 
   return (
     <div className="space-y-4">
@@ -132,6 +146,32 @@ export function SocialFormSummary({ assessment }: { assessment: SocialAssessment
         <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", CATEGORY_BADGE_CLASSES[category])}>
           {assessment.final_score} pts · {CATEGORY_LABELS[category]}
         </span>
+      </div>
+
+      <div className="rounded-lg border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <ListChecks className="size-4 text-primary" />
+            Vulnerability Assessment Checklist
+          </div>
+          {vacTier && (
+            <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", VAC_TIER_BADGE_CLASSES[vacTier])}>
+              {assessment.vac_total_score}/36 · {VAC_TIER_LABELS[vacTier]}
+            </span>
+          )}
+        </div>
+        {vacRows.length === 0 ? (
+          <p className="mt-1.5 text-xs text-muted-foreground">Not recorded</p>
+        ) : (
+          <dl className="mt-2 grid grid-cols-1 gap-1 text-xs sm:grid-cols-2">
+            {vacRows.map((row) => (
+              <div key={row.label} className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{row.label}</dt>
+                <dd className="text-right font-medium">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

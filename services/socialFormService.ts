@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/client";
 import { advanceStatus, type StudentStatus } from "@/lib/constants";
-import { computeSocialFormScore, type SocialFormScoreInput } from "@/features/social-form/scoring";
+import {
+  computeSocialFormScore,
+  computeVacScore,
+  type SocialFormScoreInput,
+  type VacField,
+} from "@/features/social-form/scoring";
 import type { Database } from "@/types/database.types";
 
 export type SocialAssessment = Database["public"]["Tables"]["social_assessments"]["Row"];
@@ -44,11 +49,12 @@ type SaveInput = SocialFormScoreInput & {
   distance_from_town: string | null;
   visitor_name: string | null;
   visitor_comments: string | null;
-};
+} & Partial<Record<VacField, number | null | undefined>>;
 
 export async function saveSocialAssessment(input: SaveInput) {
   const supabase = createClient();
   const score = computeSocialFormScore(input);
+  const vacScore = computeVacScore(input);
 
   const row = {
     student_id: input.studentId,
@@ -106,6 +112,19 @@ export async function saveSocialAssessment(input: SaveInput) {
     distance_from_town: input.distance_from_town,
     visitor_name: input.visitor_name,
     visitor_comments: input.visitor_comments,
+    vac_income_employment: input.vac_income_employment,
+    vac_food_security: input.vac_food_security,
+    vac_housing_conditions: input.vac_housing_conditions,
+    vac_health_services: input.vac_health_services,
+    vac_education: input.vac_education,
+    vac_debt_finance: input.vac_debt_finance,
+    vac_assets_livelihoods: input.vac_assets_livelihoods,
+    vac_social_protection: input.vac_social_protection,
+    vac_family_structure: input.vac_family_structure,
+    vac_shocks_risks: input.vac_shocks_risks,
+    vac_water_sanitation: input.vac_water_sanitation,
+    vac_psychological_vulnerability: input.vac_psychological_vulnerability,
+    vac_total_score: vacScore.totalScore,
   };
 
   const { error } = input.id

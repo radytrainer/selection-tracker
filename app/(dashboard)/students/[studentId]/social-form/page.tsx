@@ -61,6 +61,18 @@ function toFormValues(row: SocialAssessment): Partial<SocialFormValues> {
     distance_from_town: row.distance_from_town ?? "",
     visitor_name: row.visitor_name ?? "",
     visitor_comments: row.visitor_comments ?? "",
+    vac_income_employment: (row.vac_income_employment ?? undefined) as SocialFormValues["vac_income_employment"],
+    vac_food_security: (row.vac_food_security ?? undefined) as SocialFormValues["vac_food_security"],
+    vac_housing_conditions: (row.vac_housing_conditions ?? undefined) as SocialFormValues["vac_housing_conditions"],
+    vac_health_services: (row.vac_health_services ?? undefined) as SocialFormValues["vac_health_services"],
+    vac_education: (row.vac_education ?? undefined) as SocialFormValues["vac_education"],
+    vac_debt_finance: (row.vac_debt_finance ?? undefined) as SocialFormValues["vac_debt_finance"],
+    vac_assets_livelihoods: (row.vac_assets_livelihoods ?? undefined) as SocialFormValues["vac_assets_livelihoods"],
+    vac_social_protection: (row.vac_social_protection ?? undefined) as SocialFormValues["vac_social_protection"],
+    vac_family_structure: (row.vac_family_structure ?? undefined) as SocialFormValues["vac_family_structure"],
+    vac_shocks_risks: (row.vac_shocks_risks ?? undefined) as SocialFormValues["vac_shocks_risks"],
+    vac_water_sanitation: (row.vac_water_sanitation ?? undefined) as SocialFormValues["vac_water_sanitation"],
+    vac_psychological_vulnerability: (row.vac_psychological_vulnerability ?? undefined) as SocialFormValues["vac_psychological_vulnerability"],
   };
 }
 
@@ -142,6 +154,18 @@ export default function SocialFormEntryPage() {
         distance_from_town: values.distance_from_town || null,
         visitor_name: values.visitor_name || null,
         visitor_comments: values.visitor_comments || null,
+        vac_income_employment: values.vac_income_employment ?? null,
+        vac_food_security: values.vac_food_security ?? null,
+        vac_housing_conditions: values.vac_housing_conditions ?? null,
+        vac_health_services: values.vac_health_services ?? null,
+        vac_education: values.vac_education ?? null,
+        vac_debt_finance: values.vac_debt_finance ?? null,
+        vac_assets_livelihoods: values.vac_assets_livelihoods ?? null,
+        vac_social_protection: values.vac_social_protection ?? null,
+        vac_family_structure: values.vac_family_structure ?? null,
+        vac_shocks_risks: values.vac_shocks_risks ?? null,
+        vac_water_sanitation: values.vac_water_sanitation ?? null,
+        vac_psychological_vulnerability: values.vac_psychological_vulnerability ?? null,
       });
       toast.success("Social form saved");
       router.push(`/students/${student.id}`);

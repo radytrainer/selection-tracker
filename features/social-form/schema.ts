@@ -65,6 +65,21 @@ export const socialFormSchema = z.object({
   distance_from_town: z.string().optional().or(z.literal("")),
   visitor_name: z.string().optional().or(z.literal("")),
   visitor_comments: z.string().optional().or(z.literal("")),
+
+  // Vulnerability Assessment Checklist — separate 12-category rubric the
+  // selection team fills in at the end of the visit (see scoring.ts).
+  vac_income_employment: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_food_security: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_housing_conditions: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_health_services: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_education: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_debt_finance: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_assets_livelihoods: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_social_protection: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_family_structure: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_shocks_risks: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_water_sanitation: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  vac_psychological_vulnerability: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
 });
 
 export type SocialFormValues = z.infer<typeof socialFormSchema>;
