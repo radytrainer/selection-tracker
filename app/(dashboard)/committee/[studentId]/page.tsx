@@ -97,14 +97,9 @@ export default function CommitteeDossierPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <StudentAvatar
-            photoPath={photoPath}
-            initials={initials}
-            size="size-20 sm:size-24"
-            className="text-2xl ring-2 ring-border ring-offset-2 ring-offset-background"
-          />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <StudentAvatar photoPath={photoPath} initials={initials} size="size-12" />
           <div>
             <Link href="/committee/queue" className="text-sm text-muted-foreground hover:underline">
               ← Back to Committee Queue
@@ -129,17 +124,26 @@ export default function CommitteeDossierPage() {
             <CardTitle>Profile</CardTitle>
             <CardDescription>Summary</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            <p>Gender: <span className="capitalize">{student.gender}</span></p>
-            <p>Province: {student.provinces?.name_en ?? "—"}</p>
-            <p>School: {student.school_partners?.school_name ?? "—"}</p>
-            <p>GPA: {student.gpa ?? "—"}</p>
-            <p>
-              Social form:{" "}
-              {socialAssessment
-                ? `${CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} (${socialAssessment.final_score})`
-                : "—"}
-            </p>
+          <CardContent className="flex gap-4">
+            <StudentAvatar
+              photoPath={photoPath}
+              initials={initials}
+              shape="square"
+              size="size-28 sm:size-32"
+              className="text-2xl"
+            />
+            <div className="space-y-1 text-sm">
+              <p>Gender: <span className="capitalize">{student.gender}</span></p>
+              <p>Province: {student.provinces?.name_en ?? "—"}</p>
+              <p>School: {student.school_partners?.school_name ?? "—"}</p>
+              <p>GPA: {student.gpa ?? "—"}</p>
+              <p>
+                Social form:{" "}
+                {socialAssessment
+                  ? `${CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} (${socialAssessment.final_score})`
+                  : "—"}
+              </p>
+            </div>
           </CardContent>
         </Card>
 

@@ -17,12 +17,15 @@ export function StudentAvatar({
   signedUrl,
   initials,
   size = "size-10",
+  shape = "circle",
   className,
 }: {
   photoPath: string | null;
   signedUrl?: string | null;
   initials: string;
   size?: string;
+  /** "square" for a larger, clearer portrait view (e.g. a profile card); "circle" everywhere else. */
+  shape?: "circle" | "square";
   className?: string;
 }) {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(signedUrl ?? null);
@@ -45,18 +48,21 @@ export function StudentAvatar({
     };
   }, [photoPath, signedUrl]);
 
+  const shapeClass = shape === "square" ? "rounded-xl" : "rounded-full";
+
   if (resolvedUrl) {
     // Signed URLs carry a per-request token and an expiry — not a stable
     // asset next/image can cache/optimize, so a plain <img> is the right call.
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={resolvedUrl} alt="" className={cn(size, "shrink-0 rounded-full object-cover", className)} />;
+    return <img src={resolvedUrl} alt="" className={cn(size, "shrink-0 object-cover", shapeClass, className)} />;
   }
 
   return (
     <div
       className={cn(
         size,
-        "flex shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary",
+        "flex shrink-0 items-center justify-center bg-primary/10 font-semibold text-primary",
+        shapeClass,
         className,
       )}
     >
