@@ -40,6 +40,7 @@ export type StudentFilters = {
   provinceId?: string;
   status?: string;
   gender?: string;
+  poorLevel?: string;
   search?: string;
   page?: number;
   pageSize?: number;
@@ -47,6 +48,11 @@ export type StudentFilters = {
 
 const STUDENT_LIST_SELECT =
   "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level)";
+// Filtering on an embedded table's column requires an inner join (PostgREST)
+// — only switch to it when poorLevel is actually filtered, otherwise this
+// embed must stay a left join so students with no decision yet still show.
+const STUDENT_LIST_SELECT_POOR_LEVEL =
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions!inner(decision, poor_level)";
 
 export async function listStudents(filters: StudentFilters) {
   const supabase = createClient();
@@ -57,7 +63,7 @@ export async function listStudents(filters: StudentFilters) {
 
   let query = supabase
     .from("students")
-    .select(STUDENT_LIST_SELECT, { count: "exact" })
+    .select(filters.poorLevel ? STUDENT_LIST_SELECT_POOR_LEVEL : STUDENT_LIST_SELECT, { count: "exact" })
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -66,6 +72,12 @@ export async function listStudents(filters: StudentFilters) {
   if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
   if (filters.status) query = query.eq("status", filters.status as Student["status"]);
   if (filters.gender) query = query.eq("gender", filters.gender as Student["gender"]);
+  if (filters.poorLevel) {
+    query = query.eq(
+      "committee_decisions.poor_level",
+      filters.poorLevel as NonNullable<Database["public"]["Tables"]["committee_decisions"]["Row"]["poor_level"]>,
+    );
+  }
   if (filters.search) {
     query = query.or(
       `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,student_code.ilike.%${filters.search}%`,

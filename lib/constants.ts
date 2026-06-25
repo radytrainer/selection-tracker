@@ -50,6 +50,8 @@ export const STUDENT_STATUS_BADGE_CLASSES: Record<StudentStatus, string> = {
   dropped_out: "bg-gray-200 text-gray-600",
 };
 
+export const POOR_LEVELS = ["A+", "A", "A-", "B+", "B", "B-"] as const;
+
 /** A+ down to B- — green family darkens toward A+, orange family darkens toward B+, so the Poor Level column reads at a glance. */
 export const POOR_LEVEL_BADGE_CLASSES: Record<string, string> = {
   "A+": "bg-green-200 text-green-800",

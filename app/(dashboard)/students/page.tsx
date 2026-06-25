@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RoleGate } from "@/components/layout/RoleGate";
-import { STUDENT_STATUSES } from "@/lib/constants";
+import { POOR_LEVELS, STUDENT_STATUSES } from "@/lib/constants";
 
 const PAGE_SIZE = 25;
 
@@ -28,6 +28,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
+  const [poorLevel, setPoorLevel] = useState<string>("");
   const [provinceId, setProvinceId] = useState<string>("");
   const [provinces, setProvinces] = useState<{ id: string; name_en: string }[]>([]);
 
@@ -43,6 +44,7 @@ export default function StudentsPage() {
         pageSize: PAGE_SIZE,
         search: search || undefined,
         status: status || undefined,
+        poorLevel: poorLevel || undefined,
         provinceId: provinceId || undefined,
       });
       setData(result.data);
@@ -52,7 +54,7 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, status, provinceId]);
+  }, [page, search, status, poorLevel, provinceId]);
 
   useEffect(() => {
     fetchStudents();
@@ -104,6 +106,27 @@ export default function StudentsPage() {
             {STUDENT_STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
                 {s.replace(/_/g, " ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={poorLevel}
+          onValueChange={(value) => {
+            setPage(1);
+            setPoorLevel(value ?? "");
+          }}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="All Poor Levels">
+              {(value: string) => (value ? value : "All Poor Levels")}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Poor Levels</SelectItem>
+            {POOR_LEVELS.map((level) => (
+              <SelectItem key={level} value={level}>
+                {level}
               </SelectItem>
             ))}
           </SelectContent>
