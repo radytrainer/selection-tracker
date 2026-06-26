@@ -4,30 +4,31 @@ import { getFirebaseAdminAuth, requireSuperAdmin, setUserClaims } from "@/lib/fi
 import { createAdminClient } from "@/lib/supabase/admin";
 import { APP_ROLES } from "@/lib/constants";
 
-const inviteSchema = z.object({
+const createUserSchema = z.object({
   email: z.string().email(),
+  password: z.string().min(6),
   fullName: z.string().min(1),
   role: z.enum(APP_ROLES),
   ngoId: z.string().uuid().optional(),
 });
 
 /**
- * Admin-invite flow (docs/05-api-design.md §"Admin"): creates the Firebase
- * Auth user if needed, the matching `public.users`/`user_roles` rows, sets
- * the role/ngo_id custom claims Supabase RLS reads, and returns a password
- * reset link so the admin can hand it to the invitee (no email provider is
- * wired up yet — Google sign-in works immediately via email match either way).
+ * Admin create-user flow: creates the Firebase Auth user with the password
+ * the super admin sets (or updates it, if the email already exists), the
+ * matching `public.users`/`user_roles` rows, and the role/ngo_id custom
+ * claims Supabase RLS reads. The account is active immediately — no email
+ * provider is wired up, so a reset-link handoff isn't a usable flow here.
  */
 export async function POST(req: NextRequest) {
   const caller = await requireSuperAdmin(req);
   if (!caller) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json().catch(() => null);
-  const parsed = inviteSchema.safeParse(body);
+  const parsed = createUserSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
-  const { email, fullName, role, ngoId } = parsed.data;
+  const { email, password, fullName, role, ngoId } = parsed.data;
 
   if (role === "ngo_partner" && !ngoId) {
     return NextResponse.json({ error: "ngoId is required for the ngo_partner role" }, { status: 400 });
@@ -35,8 +36,10 @@ export async function POST(req: NextRequest) {
 
   const auth = getFirebaseAdminAuth();
   let firebaseUser = await auth.getUserByEmail(email).catch(() => null);
-  if (!firebaseUser) {
-    firebaseUser = await auth.createUser({ email, displayName: fullName });
+  if (firebaseUser) {
+    firebaseUser = await auth.updateUser(firebaseUser.uid, { password, displayName: fullName });
+  } else {
+    firebaseUser = await auth.createUser({ email, password, displayName: fullName });
   }
 
   const supabase = createAdminClient();
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
   const { data: userRow, error: userError } = await supabase
     .from("users")
     .upsert(
-      { firebase_uid: firebaseUser.uid, email, full_name: fullName, status: "invited" },
+      { firebase_uid: firebaseUser.uid, email, full_name: fullName, status: "active" },
       { onConflict: "firebase_uid" },
     )
     .select("id")
@@ -74,7 +77,5 @@ export async function POST(req: NextRequest) {
 
   await setUserClaims(firebaseUser.uid, { role, ngo_id: role === "ngo_partner" ? ngoId : null });
 
-  const resetLink = await auth.generatePasswordResetLink(email).catch(() => null);
-
-  return NextResponse.json({ ok: true, userId: userRow.id, resetLink });
+  return NextResponse.json({ ok: true, userId: userRow.id });
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { inviteUserSchema, type InviteUserValues } from "@/features/admin/schema";
+import { createUserSchema, type CreateUserValues } from "@/features/admin/schema";
 import { listNgos, type NgoListItem } from "@/services/ngoService";
 import { APP_ROLES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -25,19 +25,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function InviteUserForm({
+export function CreateUserForm({
   onSubmit,
-  submitLabel = "Send Invite",
+  submitLabel = "Create User",
 }: {
-  onSubmit: (values: InviteUserValues) => Promise<void>;
+  onSubmit: (values: CreateUserValues) => Promise<void>;
   submitLabel?: string;
 }) {
   const [ngos, setNgos] = useState<NgoListItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<InviteUserValues>({
-    resolver: zodResolver(inviteUserSchema),
-    defaultValues: { email: "", fullName: "", role: "selection_team", ngoId: "" },
+  const form = useForm<CreateUserValues>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: { email: "", password: "", fullName: "", role: "selection_team", ngoId: "" },
   });
 
   const role = form.watch("role");
@@ -48,13 +48,13 @@ export function InviteUserForm({
     }
   }, [role]);
 
-  async function handleSubmit(values: InviteUserValues) {
+  async function handleSubmit(values: CreateUserValues) {
     setIsSubmitting(true);
     try {
       await onSubmit(values);
       form.reset();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to invite user");
+      toast.error(error instanceof Error ? error.message : "Failed to create user");
     } finally {
       setIsSubmitting(false);
     }
@@ -84,6 +84,19 @@ export function InviteUserForm({
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

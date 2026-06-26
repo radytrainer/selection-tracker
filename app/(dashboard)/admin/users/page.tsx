@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
-import { InviteUserForm } from "@/components/forms/InviteUserForm";
-import type { InviteUserValues } from "@/features/admin/schema";
+import { CreateUserForm } from "@/components/forms/CreateUserForm";
+import type { CreateUserValues } from "@/features/admin/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,8 +35,7 @@ type AdminUser = {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [resetLink, setResetLink] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -54,18 +53,17 @@ export default function AdminUsersPage() {
     load();
   }, [load]);
 
-  async function handleInvite(values: InviteUserValues) {
-    const res = await fetch("/api/admin/users/invite", {
+  async function handleCreate(values: CreateUserValues) {
+    const res = await fetch("/api/admin/users/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error ?? "Failed to invite user");
+    if (!res.ok) throw new Error(body.error ?? "Failed to create user");
 
-    toast.success(`${values.fullName} invited`);
-    setInviteOpen(false);
-    setResetLink(body.resetLink ?? null);
+    toast.success(`${values.fullName} created`);
+    setCreateOpen(false);
     load();
   }
 
@@ -73,21 +71,14 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Admin</h1>
+          <h1 className="text-2xl font-semibold">Users</h1>
           <p className="text-sm text-muted-foreground">Manage user accounts and roles.</p>
         </div>
-        <Button size="sm" onClick={() => setInviteOpen(true)}>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
           <UserPlus className="size-4" />
-          Invite User
+          Create User
         </Button>
       </div>
-
-      {resetLink && (
-        <div className="rounded-md border bg-muted/40 p-3 text-sm">
-          <p className="font-medium">Password setup link (no email provider is configured yet):</p>
-          <p className="mt-1 break-all text-muted-foreground">{resetLink}</p>
-        </div>
-      )}
 
       {loading ? (
         <Skeleton className="h-64 w-full" />
@@ -124,12 +115,12 @@ export default function AdminUsersPage() {
         </Table>
       )}
 
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Invite User</DialogTitle>
+            <DialogTitle>Create User</DialogTitle>
           </DialogHeader>
-          <InviteUserForm onSubmit={handleInvite} />
+          <CreateUserForm onSubmit={handleCreate} />
         </DialogContent>
       </Dialog>
     </div>

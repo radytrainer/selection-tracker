@@ -56,7 +56,7 @@ export function getNgoColumns(onChanged: () => void): ColumnDef<NgoListItemWithS
     },
     {
       accessorKey: "organization_name",
-      header: "Company",
+      header: "NGO",
       cell: ({ row }) => (
         <div>
           <Link href={`/ngos/${row.original.id}`} className="font-medium hover:underline">

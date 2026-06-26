@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { APP_ROLES } from "@/lib/constants";
 
-export const inviteUserSchema = z
+export const createUserSchema = z
   .object({
     email: z.string().email("Enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
     fullName: z.string().min(1, "Full name is required"),
     role: z.enum(APP_ROLES),
     ngoId: z.string().uuid().optional().or(z.literal("")),
@@ -13,4 +14,4 @@ export const inviteUserSchema = z
     path: ["ngoId"],
   });
 
-export type InviteUserValues = z.infer<typeof inviteUserSchema>;
+export type CreateUserValues = z.infer<typeof createUserSchema>;

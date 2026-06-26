@@ -62,7 +62,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: BarChart3,
     roles: ["super_admin", "program_manager", "selection_team", "committee_member"],
   },
-  { href: "/admin/users", label: "Admin", icon: ShieldCheck, roles: ["super_admin"] },
+  { href: "/admin/users", label: "Users", icon: ShieldCheck, roles: ["super_admin"] },
 ];
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
