@@ -179,7 +179,21 @@ export default function CommitteeDossierPage() {
             </p>
           </div>
         </div>
-        <Badge className="capitalize">{student.status.replace(/_/g, " ")}</Badge>
+        <div className="flex flex-col items-end gap-2">
+          <Badge className="capitalize">{student.status.replace(/_/g, " ")}</Badge>
+          {canRate && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Your Vote</span>
+              <CommitteeRatingPanel
+                studentId={student.id}
+                cycleId={student.cycle_id}
+                ratings={student.committee_ratings}
+                myUserId={myUserId}
+                onRated={load}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -254,25 +268,14 @@ export default function CommitteeDossierPage() {
             </CardContent>
           </Card>
 
-          {(canSeeRatingChart || canRate) && (
+          {canSeeRatingChart && (
             <Card>
-              {canSeeRatingChart && (
-                <CardHeader>
-                  <CardTitle>Committee Ratings</CardTitle>
-                  <CardDescription>Vote distribution across the committee</CardDescription>
-                </CardHeader>
-              )}
-              <CardContent className="space-y-3">
-                {canSeeRatingChart && <RatingAverageChart ratings={student.committee_ratings} />}
-                {canRate && (
-                  <CommitteeRatingPanel
-                    studentId={student.id}
-                    cycleId={student.cycle_id}
-                    ratings={student.committee_ratings}
-                    myUserId={myUserId}
-                    onRated={load}
-                  />
-                )}
+              <CardHeader>
+                <CardTitle>Committee Ratings</CardTitle>
+                <CardDescription>Vote distribution across the committee</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RatingAverageChart ratings={student.committee_ratings} />
               </CardContent>
             </Card>
           )}
