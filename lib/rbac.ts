@@ -15,6 +15,10 @@ export const CAPABILITIES = {
   enterHomeVisitData: ["super_admin", "program_manager", "home_visit_team"],
   recordCommitteeDecision: ["super_admin", "program_manager"],
   rateCommitteeCandidate: ["committee_member"],
+  // Read-only oversight of how the committee voted (distribution, not who
+  // voted what) — not the same as recordCommitteeDecision, which is the
+  // actual Select/Waitlist/Reject/Eliminate power.
+  viewCommitteeRatings: ["super_admin", "program_manager", "selection_team"],
   approveCommitteeDecision: ["super_admin", "program_manager"],
   viewAllStudentPii: [
     "super_admin",

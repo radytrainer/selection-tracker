@@ -43,7 +43,7 @@ function ratingSummary(student: CommitteeQueueItem) {
 
 export default function CommitteeQueuePage() {
   const { role } = useRole();
-  const canSeeQueue = can(role, "recordCommitteeDecision") || can(role, "rateCommitteeCandidate");
+  const canSeeQueue = can(role, "viewCommitteeRatings") || can(role, "rateCommitteeCandidate");
   const [queue, setQueue] = useState<CommitteeQueueItem[]>([]);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});

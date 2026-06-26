@@ -51,7 +51,7 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/committee/queue",
     label: "Committee Queue",
     icon: Gavel,
-    roles: ["super_admin", "program_manager", "committee_member"],
+    roles: ["super_admin", "program_manager", "selection_team", "committee_member"],
   },
   {
     href: "/ngos",

@@ -124,6 +124,7 @@ export default function CommitteeDossierPage() {
   const banner = decision ? DECISION_BANNER[decision] : null;
   const canSeeDecision = can(role, "recordCommitteeDecision");
   const canRate = can(role, "rateCommitteeCandidate");
+  const canSeeRatingChart = can(role, "viewCommitteeRatings");
 
   return (
     <div className="space-y-6 pb-10">
@@ -236,11 +237,13 @@ export default function CommitteeDossierPage() {
             <CardHeader>
               <CardTitle>Committee Ratings</CardTitle>
               <CardDescription>
-                {canRate ? "Cast your vote — each member votes independently" : "Average shown live as members vote"}
+                {canRate
+                  ? "Cast your vote — each member votes independently, and votes stay hidden from other members"
+                  : "Vote distribution across the committee"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <RatingAverageChart ratings={student.committee_ratings} />
+              {canSeeRatingChart && <RatingAverageChart ratings={student.committee_ratings} />}
               {canRate && (
                 <CommitteeRatingPanel
                   studentId={student.id}
