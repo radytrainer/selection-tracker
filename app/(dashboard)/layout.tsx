@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -16,12 +16,29 @@ export default function DashboardLayout({
   const { user, loading: authLoading } = useAuth();
   const { role, loading: roleLoading } = useRole();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/login");
     }
   }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (roleLoading || role !== "committee_member") return;
+    // Committee members reach a student's full record via the Committee
+    // Dossier's "View full profile" link (/students/[id]) — only the list
+    // pages themselves are off-limits, not that nested route.
+    const blocked =
+      pathname === "/students" ||
+      pathname === "/reports" ||
+      pathname.startsWith("/reports/") ||
+      pathname === "/schools" ||
+      pathname.startsWith("/schools/") ||
+      pathname === "/ngos" ||
+      pathname.startsWith("/ngos/");
+    if (blocked) router.replace("/committee/queue");
+  }, [role, roleLoading, pathname, router]);
 
   if (authLoading || roleLoading || !user) {
     return (
