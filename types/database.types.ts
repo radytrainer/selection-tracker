@@ -315,6 +315,7 @@ export type Database = {
             | "eliminated"
             | "declined"
             | "dropped_out";
+          elimination_reason: string | null;
           created_at: string;
           updated_at: string;
           created_by: string | null;
@@ -360,6 +361,7 @@ export type Database = {
             | "eliminated"
             | "declined"
             | "dropped_out";
+          elimination_reason?: string | null;
           created_at?: string;
           updated_at?: string;
           created_by?: string | null;

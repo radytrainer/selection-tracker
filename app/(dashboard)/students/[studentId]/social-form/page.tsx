@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { getStudent, type StudentDetail } from "@/services/studentService";
+import { getStudent, updateStudent, type StudentDetail } from "@/services/studentService";
 import { getLatestSocialAssessment, saveSocialAssessment, type SocialAssessment } from "@/services/socialFormService";
 import { SocialForm } from "@/components/forms/SocialForm";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useRole } from "@/hooks/useRole";
+import { can } from "@/lib/rbac";
 import type { SocialFormValues } from "@/features/social-form/schema";
 
 function toFormValues(row: SocialAssessment): Partial<SocialFormValues> {
@@ -79,9 +83,13 @@ function toFormValues(row: SocialAssessment): Partial<SocialFormValues> {
 export default function SocialFormEntryPage() {
   const params = useParams<{ studentId: string }>();
   const router = useRouter();
+  const { role } = useRole();
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [existing, setExisting] = useState<SocialAssessment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showEliminateBox, setShowEliminateBox] = useState(false);
+  const [eliminationReason, setEliminationReason] = useState("");
+  const [eliminating, setEliminating] = useState(false);
 
   useEffect(() => {
     Promise.all([getStudent(params.studentId), getLatestSocialAssessment(params.studentId)])
@@ -174,6 +182,42 @@ export default function SocialFormEntryPage() {
     }
   }
 
+  async function handleEliminate() {
+    if (!student || !eliminationReason.trim()) return;
+    setEliminating(true);
+    try {
+      const updated = await updateStudent(student.id, {
+        status: "eliminated",
+        elimination_reason: eliminationReason.trim(),
+      });
+      setStudent({ ...student, ...updated });
+      setShowEliminateBox(false);
+      setEliminationReason("");
+      toast.success("Student eliminated for not matching social criteria");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to eliminate student");
+    } finally {
+      setEliminating(false);
+    }
+  }
+
+  async function handleUndoElimination() {
+    if (!student) return;
+    setEliminating(true);
+    try {
+      const updated = await updateStudent(student.id, {
+        status: "home_visit_completed",
+        elimination_reason: null,
+      });
+      setStudent({ ...student, ...updated });
+      toast.success("Elimination undone");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to undo elimination");
+    } finally {
+      setEliminating(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-xl space-y-3">
@@ -187,16 +231,71 @@ export default function SocialFormEntryPage() {
     return <p className="text-sm text-muted-foreground">Student not found.</p>;
   }
 
+  const canEliminate = can(role, "enterHomeVisitData");
+  const isEliminated = student.status === "eliminated";
+
   return (
     <div className="max-w-xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">
-          Social Form — {student.first_name} {student.last_name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {student.student_code} · Home Visit #{existing?.visit_number ?? 1}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">
+            Social Form — {student.first_name} {student.last_name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {student.student_code} · Home Visit #{existing?.visit_number ?? 1}
+          </p>
+        </div>
+        {canEliminate &&
+          (isEliminated ? (
+            <Button variant="outline" size="sm" disabled={eliminating} onClick={handleUndoElimination}>
+              Undo Elimination
+            </Button>
+          ) : (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={eliminating}
+              onClick={() => setShowEliminateBox((v) => !v)}
+            >
+              Eliminate
+            </Button>
+          ))}
       </div>
+
+      {isEliminated && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+          <p className="font-medium text-destructive">Eliminated — doesn&apos;t match social criteria</p>
+          {student.elimination_reason && (
+            <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{student.elimination_reason}</p>
+          )}
+        </div>
+      )}
+
+      {showEliminateBox && !isEliminated && (
+        <div className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <label className="text-sm font-medium text-destructive">Reason for elimination</label>
+          <Textarea
+            rows={3}
+            placeholder="Explain why this student doesn't match the social criteria..."
+            value={eliminationReason}
+            onChange={(e) => setEliminationReason(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowEliminateBox(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={eliminating || !eliminationReason.trim()}
+              onClick={handleEliminate}
+            >
+              {eliminating ? "Eliminating..." : "Confirm Elimination"}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <SocialForm studentId={student.id} defaultValues={existing ? toFormValues(existing) : undefined} onSubmit={handleSubmit} />
     </div>
   );
