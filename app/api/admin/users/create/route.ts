@@ -9,7 +9,7 @@ const createUserSchema = z.object({
   password: z.string().min(6),
   fullName: z.string().min(1),
   role: z.enum(APP_ROLES),
-  ngoId: z.string().uuid().optional(),
+  ngoId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
 });
 
 /**
