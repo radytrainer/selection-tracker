@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const ALLOWED_STUDENT_PHOTO_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -33,6 +33,45 @@ export function validateStudentPhotoFile(file: File): string | null {
     return "Photo must be 2MB or smaller.";
   }
   return null;
+}
+
+/**
+ * Re-encodes an oversized photo as JPEG, scaling it down and stepping down
+ * quality until it fits maxBytes — phone-camera photos routinely come in at
+ * 5-10MB, and rejecting those outright just pushes the resizing work onto
+ * whoever is doing the home visit. Returns the original file untouched if
+ * it already fits or if it isn't a decodable image (the caller's normal
+ * validation will reject those).
+ */
+export async function compressImageFile(file: File, maxBytes: number = MAX_IMAGE_BYTES): Promise<File> {
+  if (file.size <= maxBytes) return file;
+
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return file;
+  }
+
+  const maxDimension = 1600;
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  let blob: Blob | null = null;
+  for (let quality = 0.85; quality >= 0.4; quality -= 0.15) {
+    blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (blob && blob.size <= maxBytes) break;
+  }
+  if (!blob) return file;
+
+  const newName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([blob], newName, { type: "image/jpeg" });
 }
 
 async function uploadToBucket(bucket: string, path: string, file: File): Promise<string> {

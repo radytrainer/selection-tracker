@@ -8,7 +8,7 @@ import { CheckIcon, User, X } from "lucide-react";
 import { studentFormSchema, type StudentFormValues } from "@/features/students/schema";
 import { listProvinces, listSchools } from "@/services/lookupService";
 import { listNgos } from "@/services/ngoService";
-import { validateStudentPhotoFile } from "@/lib/supabase/storage";
+import { compressImageFile, validateStudentPhotoFile, MAX_IMAGE_BYTES } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,20 +95,32 @@ export function StudentForm({
   const [step, setStep] = useState(0);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(defaultPhotoUrl ?? null);
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
 
-  function handlePhotoSelect(file: File | null) {
+  async function handlePhotoSelect(file: File | null) {
     if (!file) {
       setPhotoFile(null);
       setPhotoPreviewUrl(defaultPhotoUrl ?? null);
       return;
     }
-    const invalidReason = validateStudentPhotoFile(file);
+
+    let finalFile = file;
+    if (file.size > MAX_IMAGE_BYTES) {
+      setIsProcessingPhoto(true);
+      try {
+        finalFile = await compressImageFile(file);
+      } finally {
+        setIsProcessingPhoto(false);
+      }
+    }
+
+    const invalidReason = validateStudentPhotoFile(finalFile);
     if (invalidReason) {
       toast.error(invalidReason);
       return;
     }
-    setPhotoFile(file);
-    setPhotoPreviewUrl(URL.createObjectURL(file));
+    setPhotoFile(finalFile);
+    setPhotoPreviewUrl(URL.createObjectURL(finalFile));
   }
 
   const form = useForm<StudentFormValues>({
@@ -226,12 +238,19 @@ export function StudentForm({
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <label className={cn(buttonVariants({ variant: "outline", size: "sm" }), "cursor-pointer")}>
-                  {photoPreviewUrl ? "Change Photo" : "Add Photo"}
+                <label
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "cursor-pointer",
+                    isProcessingPhoto && "pointer-events-none opacity-50",
+                  )}
+                >
+                  {isProcessingPhoto ? "Processing..." : photoPreviewUrl ? "Change Photo" : "Add Photo"}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     className="hidden"
+                    disabled={isProcessingPhoto}
                     onChange={(e) => handlePhotoSelect(e.target.files?.[0] ?? null)}
                   />
                 </label>
