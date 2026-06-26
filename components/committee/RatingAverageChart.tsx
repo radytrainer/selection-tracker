@@ -1,4 +1,5 @@
 import type { Database } from "@/types/database.types";
+import { cn } from "@/lib/utils";
 
 type CommitteeRatingRow = Database["public"]["Tables"]["committee_ratings"]["Row"];
 
@@ -9,6 +10,7 @@ export function RatingAverageChart({ ratings }: { ratings: CommitteeRatingRow[] 
   const average = count > 0 ? ratings.reduce((sum, r) => sum + r.score, 0) / count : 0;
   const counts = [1, 2, 3, 4, 5].map((score) => ratings.filter((r) => r.score === score).length);
   const maxCount = Math.max(1, ...counts);
+  const topCount = Math.max(...counts);
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
@@ -21,14 +23,20 @@ export function RatingAverageChart({ ratings }: { ratings: CommitteeRatingRow[] 
       <div className="space-y-1.5">
         {[5, 4, 3, 2, 1].map((score) => {
           const n = counts[score - 1];
+          const isTop = topCount > 0 && n === topCount;
           return (
             <div key={score} className="flex items-center gap-2 text-xs">
-              <span className="flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold text-muted-foreground">
+              <span
+                className={cn(
+                  "flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold transition-colors",
+                  isTop ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground",
+                )}
+              >
                 {score}
               </span>
               <div className="h-2 flex-1 rounded-full bg-muted">
                 <div
-                  className="h-2 rounded-full bg-primary transition-all"
+                  className={cn("h-2 rounded-full transition-all", isTop ? "bg-primary" : "bg-primary/40")}
                   style={{ width: `${(n / maxCount) * 100}%` }}
                 />
               </div>

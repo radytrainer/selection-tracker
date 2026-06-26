@@ -26,6 +26,7 @@ import { getMyProfile } from "@/services/userService";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { can } from "@/lib/rbac";
+import { createClient } from "@/lib/supabase/client";
 import {
   Card,
   CardContent,
@@ -84,6 +85,26 @@ export default function CommitteeDossierPage() {
     if (!user) return;
     getMyProfile(user.uid).then((profile) => setMyUserId(profile?.id ?? null));
   }, [user]);
+
+  // Live vote updates without a custom websocket server — Supabase Realtime
+  // just streams Postgres changes over the connection it already has, and
+  // RLS applies to that stream too, so committee_member only ever gets
+  // notified about their own row (see migration 0021/0022).
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`committee_ratings:${params.studentId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "committee_ratings", filter: `student_id=eq.${params.studentId}` },
+        () => load(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [params.studentId, load]);
 
   async function handleDecision(decision: "selected" | "waitlisted" | "rejected" | "eliminated" | "declined") {
     if (!student) return;
@@ -233,28 +254,28 @@ export default function CommitteeDossierPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Committee Ratings</CardTitle>
-              <CardDescription>
-                {canRate
-                  ? "Cast your vote — each member votes independently, and votes stay hidden from other members"
-                  : "Vote distribution across the committee"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {canSeeRatingChart && <RatingAverageChart ratings={student.committee_ratings} />}
-              {canRate && (
-                <CommitteeRatingPanel
-                  studentId={student.id}
-                  cycleId={student.cycle_id}
-                  ratings={student.committee_ratings}
-                  myUserId={myUserId}
-                  onRated={load}
-                />
+          {(canSeeRatingChart || canRate) && (
+            <Card>
+              {canSeeRatingChart && (
+                <CardHeader>
+                  <CardTitle>Committee Ratings</CardTitle>
+                  <CardDescription>Vote distribution across the committee</CardDescription>
+                </CardHeader>
               )}
-            </CardContent>
-          </Card>
+              <CardContent className="space-y-3">
+                {canSeeRatingChart && <RatingAverageChart ratings={student.committee_ratings} />}
+                {canRate && (
+                  <CommitteeRatingPanel
+                    studentId={student.id}
+                    cycleId={student.cycle_id}
+                    ratings={student.committee_ratings}
+                    myUserId={myUserId}
+                    onRated={load}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {canSeeDecision && (
