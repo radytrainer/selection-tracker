@@ -216,7 +216,7 @@ export default function StudentDetailPage() {
             </Badge>
           </div>
         </div>
-        {student.status === "home_visit_completed" && (
+        {student.status !== "registered" && (
           <RoleGate capability="createEditStudents">
             <Button disabled={sendingToCommittee} onClick={handleSendToCommittee} className="gap-1.5">
               <Send className="size-4" />

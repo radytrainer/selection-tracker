@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Gavel, HeartHandshake, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Gavel, HeartHandshake, MoreHorizontal, Pencil, Send, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import { RoleGate } from "@/components/layout/RoleGate";
 import { POOR_LEVEL_BADGE_CLASSES, STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { softDeleteStudent, type StudentListItem } from "@/services/studentService";
+import { sendToCommittee } from "@/services/committeeService";
 
 /** Committee isn't relevant until the home visit (social form) is done — these statuses come before it. */
 const PRE_HOME_VISIT_STATUSES = new Set(["registered", "exam_completed", "interview_completed"]);
@@ -116,6 +117,39 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
       header: "",
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
+          {row.original.status !== "registered" && (
+            <RoleGate capability="createEditStudents">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={async () => {
+                        if (
+                          !window.confirm(
+                            `Send ${row.original.first_name} ${row.original.last_name} to the committee?`,
+                          )
+                        ) {
+                          return;
+                        }
+                        try {
+                          await sendToCommittee(row.original.id);
+                          toast.success("Sent to committee");
+                          onChanged();
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Failed to send to committee");
+                        }
+                      }}
+                    />
+                  }
+                >
+                  <Send className="size-4" />
+                </TooltipTrigger>
+                <TooltipContent>Send to Committee</TooltipContent>
+              </Tooltip>
+            </RoleGate>
+          )}
           <RoleGate capability="createEditStudents">
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
