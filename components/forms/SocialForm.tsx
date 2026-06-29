@@ -135,10 +135,13 @@ function draftKey(studentId: string) {
 export function SocialForm({
   studentId,
   defaultValues,
+  visitorName,
   onSubmit,
 }: {
   studentId: string;
   defaultValues?: Partial<SocialFormValues>;
+  /** Logged-in user's name — always overrides visitor_name, which is no longer hand-typed. */
+  visitorName: string;
   onSubmit: (values: SocialFormValues) => Promise<void>;
 }) {
   const [step, setStep] = useState(0);
@@ -147,8 +150,13 @@ export function SocialForm({
 
   const form = useForm<SocialFormValues>({
     resolver: zodResolver(socialFormSchema),
-    defaultValues: { ...DEFAULT_VALUES, ...defaultValues },
+    defaultValues: { ...DEFAULT_VALUES, ...defaultValues, visitor_name: visitorName },
   });
+
+  useEffect(() => {
+    form.setValue("visitor_name", visitorName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visitorName]);
 
   // Recover an in-progress draft on a brand-new entry only — editing an
   // existing saved assessment trusts the server data, not a possibly-stale
@@ -912,7 +920,7 @@ export function SocialForm({
                 <FormItem>
                   <FormLabel>Home Visitor Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} disabled className="disabled:opacity-100" />
                   </FormControl>
                 </FormItem>
               )}

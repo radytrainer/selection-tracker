@@ -11,9 +11,10 @@ export type StudentListItem = Student & {
   school_partners: { school_name: string } | null;
   ngo_partners: { organization_name: string } | null;
   committee_decisions: { decision: string | null; poor_level: string | null } | null;
-  // Only the ids needed to answer "did the current user record this
-  // student's social form" — see lib/rbac.ts#sendToCommittee.
-  social_assessments: { visitor_id: string | null }[];
+  // Just enough to answer "did the current user record this student's
+  // social form" (lib/rbac.ts#sendToCommittee) and to show the latest
+  // home visitor's name in the students list.
+  social_assessments: { visitor_id: string | null; visitor_name: string | null; visit_number: number }[];
 };
 
 type ExamResult = Database["public"]["Tables"]["exam_results"]["Row"];
@@ -51,12 +52,12 @@ export type StudentFilters = {
 };
 
 const STUDENT_LIST_SELECT =
-  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level), social_assessments(visitor_id)";
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level), social_assessments(visitor_id, visitor_name, visit_number)";
 // Filtering on an embedded table's column requires an inner join (PostgREST)
 // — only switch to it when poorLevel is actually filtered, otherwise this
 // embed must stay a left join so students with no decision yet still show.
 const STUDENT_LIST_SELECT_POOR_LEVEL =
-  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions!inner(decision, poor_level), social_assessments(visitor_id)";
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions!inner(decision, poor_level), social_assessments(visitor_id, visitor_name, visit_number)";
 
 export async function listStudents(filters: StudentFilters) {
   const supabase = createClient();

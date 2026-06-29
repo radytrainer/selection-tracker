@@ -30,22 +30,13 @@ export function getStudentColumns(
 ): ColumnDef<StudentListItem>[] {
   return [
     {
-      accessorKey: "student_code",
-      header: "Code",
-      cell: ({ row }) => (
-        <Link href={`/students/${row.original.id}`} className="font-medium hover:underline">
-          {row.original.student_code}
-        </Link>
-      ),
-    },
-    {
       id: "name",
       header: "Name",
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
-          <span>
+          <Link href={`/students/${row.original.id}`} className="font-medium hover:underline">
             {row.original.first_name} {row.original.last_name}
-          </span>
+          </Link>
           <Tooltip>
             <TooltipTrigger
               render={
@@ -91,6 +82,16 @@ export function getStudentColumns(
       id: "school",
       header: "School",
       cell: ({ row }) => row.original.school_partners?.school_name ?? "—",
+    },
+    {
+      id: "home_visitor",
+      header: "Home Visitor",
+      cell: ({ row }) => {
+        const visits = row.original.social_assessments;
+        if (visits.length === 0) return "---";
+        const latest = visits.reduce((a, b) => (b.visit_number > a.visit_number ? b : a));
+        return latest.visitor_name || "---";
+      },
     },
     {
       accessorKey: "status",

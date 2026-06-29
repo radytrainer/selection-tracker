@@ -9,6 +9,7 @@ import { SocialForm } from "@/components/forms/SocialForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { can } from "@/lib/rbac";
 import type { SocialFormValues } from "@/features/social-form/schema";
@@ -83,6 +84,7 @@ function toFormValues(row: SocialAssessment): Partial<SocialFormValues> {
 export default function SocialFormEntryPage() {
   const params = useParams<{ studentId: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const { role } = useRole();
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [existing, setExisting] = useState<SocialAssessment | null>(null);
@@ -296,7 +298,12 @@ export default function SocialFormEntryPage() {
         </div>
       )}
 
-      <SocialForm studentId={student.id} defaultValues={existing ? toFormValues(existing) : undefined} onSubmit={handleSubmit} />
+      <SocialForm
+        studentId={student.id}
+        defaultValues={existing ? toFormValues(existing) : undefined}
+        visitorName={user?.displayName || user?.email || ""}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }
