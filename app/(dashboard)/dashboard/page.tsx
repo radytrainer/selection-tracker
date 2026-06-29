@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NgoYearlyChart } from "@/components/charts/NgoYearlyChart";
-import { getDashboardKpis, type DashboardKpis } from "@/services/dashboardService";
+import { VisitorStatsChart } from "@/components/charts/VisitorStatsChart";
+import { getDashboardKpis, getVisitorStats, type DashboardKpis, type VisitorStat } from "@/services/dashboardService";
 import { getNgoYearlyStats, type NgoYearlyStat } from "@/services/ngoService";
 
 const KPI_FIELDS: { key: keyof DashboardKpis; label: string }[] = [
@@ -27,13 +28,15 @@ const KPI_FIELDS: { key: keyof DashboardKpis; label: string }[] = [
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<DashboardKpis | null>(null);
   const [yearlyStats, setYearlyStats] = useState<NgoYearlyStat[]>([]);
+  const [visitorStats, setVisitorStats] = useState<VisitorStat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getDashboardKpis(), getNgoYearlyStats()])
-      .then(([k, y]) => {
+    Promise.all([getDashboardKpis(), getNgoYearlyStats(), getVisitorStats()])
+      .then(([k, y, v]) => {
         setKpis(k);
         setYearlyStats(y);
+        setVisitorStats(v);
       })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load dashboard"))
       .finally(() => setLoading(false));
@@ -70,6 +73,18 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           {loading ? <Skeleton className="h-80 w-full" /> : <NgoYearlyChart stats={yearlyStats} />}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Social Forms Filled by Visitor</CardTitle>
+          <CardDescription>
+            How many distinct students each home visitor/staff member has visited and recorded a social form for.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? <Skeleton className="h-80 w-full" /> : <VisitorStatsChart stats={visitorStats} />}
         </CardContent>
       </Card>
     </div>
