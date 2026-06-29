@@ -11,6 +11,9 @@ export type StudentListItem = Student & {
   school_partners: { school_name: string } | null;
   ngo_partners: { organization_name: string } | null;
   committee_decisions: { decision: string | null; poor_level: string | null } | null;
+  // Only the ids needed to answer "did the current user record this
+  // student's social form" — see lib/rbac.ts#sendToCommittee.
+  social_assessments: { visitor_id: string | null }[];
 };
 
 type ExamResult = Database["public"]["Tables"]["exam_results"]["Row"];
@@ -48,12 +51,12 @@ export type StudentFilters = {
 };
 
 const STUDENT_LIST_SELECT =
-  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level)";
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level), social_assessments(visitor_id)";
 // Filtering on an embedded table's column requires an inner join (PostgREST)
 // — only switch to it when poorLevel is actually filtered, otherwise this
 // embed must stay a left join so students with no decision yet still show.
 const STUDENT_LIST_SELECT_POOR_LEVEL =
-  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions!inner(decision, poor_level)";
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions!inner(decision, poor_level), social_assessments(visitor_id)";
 
 export async function listStudents(filters: StudentFilters) {
   const supabase = createClient();

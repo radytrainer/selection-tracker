@@ -10,6 +10,11 @@ export const CAPABILITIES = {
   manageCycles: ["super_admin", "program_manager"],
   managePartners: ["super_admin", "program_manager"],
   createEditStudents: ["super_admin", "program_manager", "selection_team"],
+  // Separate from createEditStudents so home_visit_team gets the button
+  // without also gaining general create/edit/delete rights. They're further
+  // restricted server-side (0026) to only students whose social form they
+  // themselves recorded — this list alone doesn't capture that row-level rule.
+  sendToCommittee: ["super_admin", "program_manager", "selection_team", "home_visit_team"],
   enterExamScores: ["super_admin", "program_manager", "selection_team"],
   enterInterviewScores: ["super_admin", "program_manager", "interview_team"],
   enterHomeVisitData: ["super_admin", "program_manager", "home_visit_team"],

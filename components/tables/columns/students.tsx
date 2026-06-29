@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RoleGate } from "@/components/layout/RoleGate";
-import { POOR_LEVEL_BADGE_CLASSES, STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
+import { can } from "@/lib/rbac";
+import { POOR_LEVEL_BADGE_CLASSES, STUDENT_STATUS_BADGE_CLASSES, type AppRole } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { softDeleteStudent, type StudentListItem } from "@/services/studentService";
 import { sendToCommittee } from "@/services/committeeService";
@@ -22,7 +23,11 @@ import { sendToCommittee } from "@/services/committeeService";
 /** Committee isn't relevant until the home visit (social form) is done — these statuses come before it. */
 const PRE_HOME_VISIT_STATUSES = new Set(["registered", "exam_completed", "interview_completed"]);
 
-export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListItem>[] {
+export function getStudentColumns(
+  onChanged: () => void,
+  role: AppRole | null,
+  currentUserId: string | null,
+): ColumnDef<StudentListItem>[] {
   return [
     {
       accessorKey: "student_code",
@@ -115,10 +120,18 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          {row.original.status !== "registered" && (
-            <RoleGate capability="createEditStudents">
+      cell: ({ row }) => {
+        // home_visit_team only gets the button on cases where they're the
+        // one who recorded the social form (see migration 0026) — other
+        // roles with the capability can send any case.
+        const canSendThisOne =
+          can(role, "sendToCommittee") &&
+          (role !== "home_visit_team" ||
+            row.original.social_assessments.some((sa) => sa.visitor_id === currentUserId));
+
+        return (
+          <div className="flex items-center gap-1">
+            {row.original.status !== "registered" && canSendThisOne && (
               <Tooltip>
                 <TooltipTrigger
                   render={
@@ -148,45 +161,45 @@ export function getStudentColumns(onChanged: () => void): ColumnDef<StudentListI
                 </TooltipTrigger>
                 <TooltipContent>Send to Committee</TooltipContent>
               </Tooltip>
+            )}
+            <RoleGate capability="createEditStudents">
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                  <MoreHorizontal className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem render={<Link href={`/students/${row.original.id}/edit`} />}>
+                    <Pencil className="size-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={async () => {
+                      if (
+                        !window.confirm(
+                          `Delete ${row.original.first_name} ${row.original.last_name} (${row.original.student_code})? This can be restored by an admin later.`,
+                        )
+                      ) {
+                        return;
+                      }
+                      try {
+                        await softDeleteStudent(row.original.id);
+                        toast.success("Student deleted");
+                        onChanged();
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Failed to delete student");
+                      }
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </RoleGate>
-          )}
-          <RoleGate capability="createEditStudents">
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-                <MoreHorizontal className="size-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem render={<Link href={`/students/${row.original.id}/edit`} />}>
-                  <Pencil className="size-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={async () => {
-                    if (
-                      !window.confirm(
-                        `Delete ${row.original.first_name} ${row.original.last_name} (${row.original.student_code})? This can be restored by an admin later.`,
-                      )
-                    ) {
-                      return;
-                    }
-                    try {
-                      await softDeleteStudent(row.original.id);
-                      toast.success("Student deleted");
-                      onChanged();
-                    } catch (error) {
-                      toast.error(error instanceof Error ? error.message : "Failed to delete student");
-                    }
-                  }}
-                >
-                  <Trash2 className="size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </RoleGate>
-        </div>
-      ),
+          </div>
+        );
+      },
     },
   ];
 }

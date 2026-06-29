@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { listStudents, type StudentListItem } from "@/services/studentService";
 import { listProvinces } from "@/services/lookupService";
+import { getMyProfile } from "@/services/userService";
 import { StudentsTable } from "@/components/tables/StudentsTable";
 import { StudentImportDialog } from "@/components/forms/StudentImportDialog";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,11 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
 import { POOR_LEVELS, STUDENT_STATUSES } from "@/lib/constants";
 
 const PAGE_SIZE = 25;
 
 export default function StudentsPage() {
+  const { user } = useAuth();
+  const { role } = useRole();
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   const [data, setData] = useState<StudentListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -35,6 +41,11 @@ export default function StudentsPage() {
   useEffect(() => {
     listProvinces().then(setProvinces).catch(() => toast.error("Failed to load provinces"));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    getMyProfile(user.uid).then((profile) => setMyUserId(profile?.id ?? null));
+  }, [user]);
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -164,6 +175,8 @@ export default function StudentsPage() {
           total={total}
           onPageChange={setPage}
           onChanged={fetchStudents}
+          role={role}
+          currentUserId={myUserId}
         />
       )}
     </div>

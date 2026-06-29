@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { getStudent, type StudentDetail } from "@/services/studentService";
 import { sendToCommittee } from "@/services/committeeService";
+import { getMyProfile } from "@/services/userService";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS } from "@/features/social-form/scoring";
 import { STUDENT_STATUSES, STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
@@ -37,6 +38,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
+import { can } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
@@ -154,6 +158,9 @@ function PipelineStepper({ status }: { status: string }) {
 
 export default function StudentDetailPage() {
   const params = useParams<{ studentId: string }>();
+  const { user } = useAuth();
+  const { role } = useRole();
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [sendingToCommittee, setSendingToCommittee] = useState(false);
@@ -168,6 +175,11 @@ export default function StudentDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!user) return;
+    getMyProfile(user.uid).then((profile) => setMyUserId(profile?.id ?? null));
+  }, [user]);
 
   async function handleSendToCommittee() {
     if (!student) return;
@@ -200,6 +212,11 @@ export default function StudentDetailPage() {
   const initials = `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase();
   const latestAssessment = student.social_assessments[student.social_assessments.length - 1] ?? null;
   const photoPath = pickLatestPhotoPath(student.student_documents);
+  // home_visit_team only gets this button on cases where they're the one
+  // who recorded the social form (see migration 0026).
+  const canSendToCommittee =
+    can(role, "sendToCommittee") &&
+    (role !== "home_visit_team" || student.social_assessments.some((sa) => sa.visitor_id === myUserId));
 
   return (
     <div className="space-y-5">
@@ -216,13 +233,11 @@ export default function StudentDetailPage() {
             </Badge>
           </div>
         </div>
-        {student.status !== "registered" && (
-          <RoleGate capability="createEditStudents">
-            <Button disabled={sendingToCommittee} onClick={handleSendToCommittee} className="gap-1.5">
-              <Send className="size-4" />
-              {sendingToCommittee ? "Sending..." : "Send to Committee"}
-            </Button>
-          </RoleGate>
+        {student.status !== "registered" && canSendToCommittee && (
+          <Button disabled={sendingToCommittee} onClick={handleSendToCommittee} className="gap-1.5">
+            <Send className="size-4" />
+            {sendingToCommittee ? "Sending..." : "Send to Committee"}
+          </Button>
         )}
       </div>
 

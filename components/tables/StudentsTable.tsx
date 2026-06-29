@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import type { StudentListItem } from "@/services/studentService";
+import type { AppRole } from "@/lib/constants";
 
 export function StudentsTable({
   data,
@@ -25,6 +26,8 @@ export function StudentsTable({
   total,
   onPageChange,
   onChanged,
+  role,
+  currentUserId,
 }: {
   data: StudentListItem[];
   page: number;
@@ -32,8 +35,13 @@ export function StudentsTable({
   total: number;
   onPageChange: (page: number) => void;
   onChanged: () => void;
+  role: AppRole | null;
+  currentUserId: string | null;
 }) {
-  const columns = useMemo(() => getStudentColumns(onChanged), [onChanged]);
+  const columns = useMemo(
+    () => getStudentColumns(onChanged, role, currentUserId),
+    [onChanged, role, currentUserId],
+  );
   const table = useReactTable({
     data,
     columns,
