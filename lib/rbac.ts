@@ -36,6 +36,10 @@ export const CAPABILITIES = {
     "committee_member",
   ],
   generateReports: ["super_admin", "program_manager", "selection_team", "committee_member"],
+  // Editing the manually-entered Selection Process funnel numbers (0027) —
+  // everyone in viewAllStudentPii-ish staff can see the page, but only
+  // these roles get the Edit button on each card.
+  manageSelectionProcessStats: ["super_admin", "program_manager", "selection_team"],
 } as const satisfies Record<string, readonly AppRole[]>;
 
 export type Capability = keyof typeof CAPABILITIES;

@@ -9,6 +9,7 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   GraduationCap,
   Gavel,
   LayoutDashboard,
@@ -85,6 +86,19 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Finalists",
     icon: Award,
     roles: ["super_admin", "program_manager", "selection_team", "committee_member"],
+  },
+  {
+    href: "/selection-process",
+    label: "Selection Process",
+    icon: ClipboardList,
+    roles: [
+      "super_admin",
+      "program_manager",
+      "selection_team",
+      "interview_team",
+      "home_visit_team",
+      "committee_member",
+    ],
   },
   {
     href: "/reports",

@@ -869,6 +869,148 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
         Relationships: [];
       };
+      information_session_stats: {
+        Row: {
+          cycle_id: string;
+          sessions_done: number;
+          sessions_planned: number;
+          sessions_without_date: number;
+          sessions_without_hosting_partner: number;
+          attendees_expected_boys: number;
+          attendees_expected_girls: number;
+          attendees_actual_boys: number;
+          attendees_actual_girls: number;
+          additional_expected_boys: number;
+          additional_expected_girls: number;
+          sessions_without_expected_number: number;
+          applicants_total: number;
+          applicants_girls: number;
+          applicants_boys: number;
+          updated_at: string;
+        };
+        Insert: {
+          cycle_id: string;
+          sessions_done?: number;
+          sessions_planned?: number;
+          sessions_without_date?: number;
+          sessions_without_hosting_partner?: number;
+          attendees_expected_boys?: number;
+          attendees_expected_girls?: number;
+          attendees_actual_boys?: number;
+          attendees_actual_girls?: number;
+          additional_expected_boys?: number;
+          additional_expected_girls?: number;
+          sessions_without_expected_number?: number;
+          applicants_total?: number;
+          applicants_girls?: number;
+          applicants_boys?: number;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["information_session_stats"]["Insert"]>;
+        Relationships: [];
+      };
+      exam_center_stats: {
+        Row: {
+          cycle_id: string;
+          centers_total: number;
+          sessions_done: number;
+          sessions_not_done: number;
+          info_sessions_not_linked: number;
+          applicants_total: number;
+          applicants_not_assigned: number;
+          applicants_without_schedule: number;
+          updated_at: string;
+        };
+        Insert: {
+          cycle_id: string;
+          centers_total?: number;
+          sessions_done?: number;
+          sessions_not_done?: number;
+          info_sessions_not_linked?: number;
+          applicants_total?: number;
+          applicants_not_assigned?: number;
+          applicants_without_schedule?: number;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["exam_center_stats"]["Insert"]>;
+        Relationships: [];
+      };
+      exam_result_stats: {
+        Row: {
+          cycle_id: string;
+          attended: number;
+          absent: number;
+          partially_attended: number;
+          still_to_be_done: number;
+          passed: number;
+          passed_girls: number;
+          passed_boys: number;
+          updated_at: string;
+        };
+        Insert: {
+          cycle_id: string;
+          attended?: number;
+          absent?: number;
+          partially_attended?: number;
+          still_to_be_done?: number;
+          passed?: number;
+          passed_girls?: number;
+          passed_boys?: number;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["exam_result_stats"]["Insert"]>;
+        Relationships: [];
+      };
+      interview_center_stats: {
+        Row: {
+          cycle_id: string;
+          centers_total: number;
+          sessions_done: number;
+          sessions_not_done: number;
+          exam_centers_not_linked: number;
+          applicants_eligible: number;
+          applicants_not_assigned: number;
+          applicants_without_schedule: number;
+          updated_at: string;
+        };
+        Insert: {
+          cycle_id: string;
+          centers_total?: number;
+          sessions_done?: number;
+          sessions_not_done?: number;
+          exam_centers_not_linked?: number;
+          applicants_eligible?: number;
+          applicants_not_assigned?: number;
+          applicants_without_schedule?: number;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_center_stats"]["Insert"]>;
+        Relationships: [];
+      };
+      interview_result_stats: {
+        Row: {
+          cycle_id: string;
+          attended: number;
+          absent: number;
+          still_to_be_done: number;
+          passed: number;
+          passed_girls: number;
+          passed_boys: number;
+          updated_at: string;
+        };
+        Insert: {
+          cycle_id: string;
+          attended?: number;
+          absent?: number;
+          still_to_be_done?: number;
+          passed?: number;
+          passed_girls?: number;
+          passed_boys?: number;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_result_stats"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       mv_province_stats: {
