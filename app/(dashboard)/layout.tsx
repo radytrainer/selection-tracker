@@ -40,6 +40,20 @@ export default function DashboardLayout({
     if (blocked) router.replace("/committee/queue");
   }, [role, roleLoading, pathname, router]);
 
+  useEffect(() => {
+    if (roleLoading || role !== "home_visit_team") return;
+    // home_visit_team no longer has NGO/School/Finalist nav entries —
+    // block the routes directly too, so typing the URL doesn't work either.
+    const blocked =
+      pathname === "/ngos" ||
+      pathname.startsWith("/ngos/") ||
+      pathname === "/schools" ||
+      pathname.startsWith("/schools/") ||
+      pathname === "/finalist" ||
+      pathname.startsWith("/finalist/");
+    if (blocked) router.replace("/students");
+  }, [role, roleLoading, pathname, router]);
+
   if (authLoading || roleLoading || !user) {
     return (
       <div className="flex min-h-screen flex-col gap-3 p-6">

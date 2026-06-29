@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 import {
   approveCommitteeDecision,
   listCommitteeQueue,
@@ -41,14 +42,40 @@ function ratingSummary(student: CommitteeQueueItem) {
   return `${avg.toFixed(1)}★ avg · ${raters} member${raters === 1 ? "" : "s"} rated`;
 }
 
+// home_visit_team doesn't vote or decide — "Finished" just clears a case
+// from their own view of the queue once they've seen the committee's
+// ratings. Local-only (per browser), it doesn't touch the student's status
+// or what selection_team/super_admin see.
+const FINISHED_STORAGE_KEY = "committee-queue-finished-cases";
+
 export default function CommitteeQueuePage() {
   const { role } = useRole();
   const canSeeQueue = can(role, "viewCommitteeRatings") || can(role, "rateCommitteeCandidate");
+  const canFinish = role === "home_visit_team";
   const [queue, setQueue] = useState<CommitteeQueueItem[]>([]);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [finishedIds, setFinishedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!canFinish) return;
+    try {
+      setFinishedIds(JSON.parse(localStorage.getItem(FINISHED_STORAGE_KEY) ?? "[]"));
+    } catch {
+      setFinishedIds([]);
+    }
+  }, [canFinish]);
+
+  function handleFinish(studentId: string) {
+    const next = [...finishedIds, studentId];
+    setFinishedIds(next);
+    localStorage.setItem(FINISHED_STORAGE_KEY, JSON.stringify(next));
+    toast.success("Case marked as finished");
+  }
+
+  const visibleQueue = canFinish ? queue.filter((s) => !finishedIds.includes(s.id)) : queue;
 
   const load = useCallback(() => {
     setLoading(true);
@@ -100,12 +127,12 @@ export default function CommitteeQueuePage() {
 
       {canSeeQueue && (
         <div className="space-y-3">
-          <h2 className="text-lg font-medium">Awaiting Decision ({queue.length})</h2>
-          {queue.length === 0 ? (
+          <h2 className="text-lg font-medium">Awaiting Decision ({visibleQueue.length})</h2>
+          {visibleQueue.length === 0 ? (
             <p className="text-sm text-muted-foreground">No students waiting on a committee decision.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {queue.map((student) => {
+              {visibleQueue.map((student) => {
                 const socialAssessment = student.social_assessments[0] ?? null;
                 const photoPath = pickLatestPhotoPath(student.student_documents);
                 const initials = `${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase();
@@ -160,6 +187,23 @@ export default function CommitteeQueuePage() {
                         </p>
                         <p className="font-medium text-foreground">{ratingSummary(student)}</p>
                       </CardContent>
+                      {canFinish && (
+                        <CardContent className="pt-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full gap-1.5"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFinish(student.id);
+                            }}
+                          >
+                            <CheckCircle2 className="size-3.5" />
+                            Finished
+                          </Button>
+                        </CardContent>
+                      )}
                     </Card>
                   </Link>
                 );
