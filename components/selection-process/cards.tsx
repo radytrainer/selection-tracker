@@ -1,14 +1,25 @@
 "use client";
 
 import {
+  Building2,
+  CalendarDays,
+  GraduationCap,
+  Mic,
+  type LucideIcon,
+  ClipboardCheck,
+} from "lucide-react";
+import {
   Card,
   CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { StatsEditDialog, type StatsFieldGroup } from "@/components/selection-process/StatsEditDialog";
+import { GenderSplit, MetricTile, ProgressBar, StatusChip } from "@/components/selection-process/primitives";
 import {
   saveExamCenterStats,
   saveExamResultStats,
@@ -26,54 +37,59 @@ function pct(part: number, total: number) {
   return total > 0 ? Math.round((part / total) * 100) : 0;
 }
 
+const ACCENTS = {
+  indigo: "bg-indigo-100 text-indigo-600",
+  blue: "bg-blue-100 text-blue-600",
+  emerald: "bg-emerald-100 text-emerald-600",
+  violet: "bg-violet-100 text-violet-600",
+  amber: "bg-amber-100 text-amber-600",
+} as const;
+
 /** Section heading inside a card body, e.g. "Attendance" / "Applicants". */
 function SubHeading({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm font-medium text-muted-foreground">{children}</p>;
-}
-
-function Bullet({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <li className={cn("text-sm", className)}>{children}</li>;
-}
-
-/** The "N not yet done" (orange) vs "All done" (green) pattern repeated across every card. */
-function GapLine({ count, missingLabel, allDoneLabel }: { count: number; missingLabel: string; allDoneLabel: string }) {
-  return count > 0 ? (
-    <p className="text-sm font-medium text-amber-600">
-      {count} {missingLabel}
-    </p>
-  ) : (
-    <p className="text-sm font-medium text-green-600">{allDoneLabel}</p>
-  );
+  return <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{children}</p>;
 }
 
 function SectionCardShell({
+  icon: Icon,
+  accent,
   title,
+  description,
   canEdit,
-  editTitle,
   groups,
   values,
   onSave,
   children,
 }: {
+  icon: LucideIcon;
+  accent: keyof typeof ACCENTS;
   title: string;
+  description: string;
   canEdit: boolean;
-  editTitle: string;
   groups: StatsFieldGroup[];
   values: Record<string, unknown>;
   onSave: (values: Record<string, number>) => Promise<void>;
   children: React.ReactNode;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="border-b pb-4">
+        <div className="flex items-start gap-3">
+          <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-full", ACCENTS[accent])}>
+            <Icon className="size-5" />
+          </div>
+          <div>
+            <CardTitle className="text-base">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+        </div>
         {canEdit && (
           <CardAction>
-            <StatsEditDialog title={editTitle} groups={groups} values={values} onSave={onSave} />
+            <StatsEditDialog title={title} groups={groups} values={values} onSave={onSave} />
           </CardAction>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
+      <CardContent className="space-y-5 pt-5">{children}</CardContent>
     </Card>
   );
 }
@@ -144,9 +160,11 @@ export function InformationSessionsCard({
 
   return (
     <SectionCardShell
+      icon={CalendarDays}
+      accent="indigo"
       title="Information Sessions"
+      description="Outreach sessions held to recruit applicants"
       canEdit={canEdit}
-      editTitle="Information Sessions"
       groups={groups}
       values={s}
       onSave={async (values) => {
@@ -154,60 +172,51 @@ export function InformationSessionsCard({
         onSaved();
       }}
     >
-      <div>
-        <p className="text-lg font-semibold">Sessions: {sessionsTotal}</p>
-        <ul className="mt-1 list-disc space-y-0.5 pl-5">
-          <Bullet>{s.sessions_done} done</Bullet>
-          <Bullet>{s.sessions_planned} planned</Bullet>
-          <Bullet className={s.sessions_without_date > 0 ? "text-amber-600" : undefined}>
-            {s.sessions_without_date} without date yet
-          </Bullet>
-        </ul>
-        <div className="mt-1.5">
-          <GapLine
-            count={s.sessions_without_hosting_partner}
-            missingLabel="sessions without hosting partner"
-            allDoneLabel="All sessions have a hosting partner"
-          />
+      <div className="space-y-2.5">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Sessions</SubHeading>
+          <span className="text-2xl font-bold leading-none">{sessionsTotal}</span>
         </div>
+        <div className="grid grid-cols-3 gap-2">
+          <MetricTile value={s.sessions_done} label="Done" />
+          <MetricTile value={s.sessions_planned} label="Planned" />
+          <MetricTile value={s.sessions_without_date} label="No Date" tone={s.sessions_without_date > 0 ? "warning" : "default"} />
+        </div>
+        <StatusChip
+          count={s.sessions_without_hosting_partner}
+          missingLabel="sessions without hosting partner"
+          okLabel="All sessions have a hosting partner"
+        />
       </div>
 
-      <div>
+      <Separator />
+
+      <div className="space-y-2.5">
         <SubHeading>Attendance</SubHeading>
-        <p className="mt-1 text-sm">
-          {expectedTotal} attendees expected ({s.attendees_expected_boys} boys and {s.attendees_expected_girls} girls)
-        </p>
-        <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
-          <Bullet>
-            {actualTotal} attendees so far ({s.attendees_actual_boys} boys and {s.attendees_actual_girls} girls)
-          </Bullet>
-          <Bullet>
-            {additionalTotal} additional expected ({s.additional_expected_boys} boys and {s.additional_expected_girls}{" "}
-            girls)
-          </Bullet>
-        </ul>
-        <div className="mt-1.5">
-          <GapLine
-            count={s.sessions_without_expected_number}
-            missingLabel="sessions without expected number"
-            allDoneLabel="All sessions have an expected number"
-          />
+        <div className="grid grid-cols-3 gap-2">
+          <MetricTile value={expectedTotal} label="Expected" />
+          <MetricTile value={actualTotal} label="So Far" />
+          <MetricTile value={additionalTotal} label="Additional" />
         </div>
+        {actualTotal > 0 && <GenderSplit girls={s.attendees_actual_girls} boys={s.attendees_actual_boys} />}
+        <StatusChip
+          count={s.sessions_without_expected_number}
+          missingLabel="sessions without expected number"
+          okLabel="All sessions have an expected number"
+        />
       </div>
 
-      <div>
-        <SubHeading>Applicants</SubHeading>
-        <p className="mt-1 text-sm">
-          {s.applicants_total} applicants ({pct(s.applicants_total, actualTotal)}% of attendance)
-        </p>
-        <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
-          <Bullet>
-            {s.applicants_girls} girls ({pct(s.applicants_girls, s.applicants_total)}%)
-          </Bullet>
-          <Bullet>
-            {s.applicants_boys} boys ({pct(s.applicants_boys, s.applicants_total)}%)
-          </Bullet>
-        </ul>
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Applicants</SubHeading>
+          <span className="text-sm font-medium text-muted-foreground">
+            {pct(s.applicants_total, actualTotal)}% of attendance
+          </span>
+        </div>
+        <p className="text-2xl font-bold leading-none">{s.applicants_total}</p>
+        <GenderSplit girls={s.applicants_girls} boys={s.applicants_boys} />
       </div>
     </SectionCardShell>
   );
@@ -259,9 +268,11 @@ export function ExamCentersCard({
 
   return (
     <SectionCardShell
+      icon={Building2}
+      accent="blue"
       title="Exam Centers"
+      description="Venues hosting the entrance exam"
       canEdit={canEdit}
-      editTitle="Exam Centers"
       groups={groups}
       values={s}
       onSave={async (values) => {
@@ -269,46 +280,47 @@ export function ExamCentersCard({
         onSaved();
       }}
     >
-      <div>
-        <p className="text-lg font-semibold">{s.centers_total} exam centers</p>
-        <ul className="mt-1 list-disc space-y-0.5 pl-5">
-          <Bullet>{s.sessions_done} sessions already done</Bullet>
-          <Bullet className={s.sessions_not_done > 0 ? "text-amber-600" : undefined}>
-            {s.sessions_not_done} session(s) scheduled not yet done
-          </Bullet>
-        </ul>
-      </div>
-
-      <div>
-        <SubHeading>Information Sessions</SubHeading>
-        <div className="mt-1">
-          <GapLine
-            count={s.info_sessions_not_linked}
-            missingLabel="not linked to an exam center"
-            allDoneLabel="All information sessions are linked to an exam center"
-          />
+      <div className="space-y-2.5">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Centers</SubHeading>
+          <span className="text-2xl font-bold leading-none">{s.centers_total}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MetricTile value={s.sessions_done} label="Sessions Done" />
+          <MetricTile value={s.sessions_not_done} label="Not Done Yet" tone={s.sessions_not_done > 0 ? "warning" : "default"} />
         </div>
       </div>
 
-      <div>
-        <SubHeading>Applicants</SubHeading>
-        <p className="mt-1 text-sm">{s.applicants_total} applicant(s)</p>
-        <ul className="mt-0.5 space-y-0.5 pl-0">
-          <li>
-            <GapLine
-              count={s.applicants_not_assigned}
-              missingLabel="not assigned to an exam center"
-              allDoneLabel="All are assigned to an exam center"
-            />
-          </li>
-          <li>
-            <GapLine
-              count={s.applicants_without_schedule}
-              missingLabel="without a schedule"
-              allDoneLabel="All have a schedule"
-            />
-          </li>
-        </ul>
+      <Separator />
+
+      <div className="space-y-2">
+        <SubHeading>Information Sessions</SubHeading>
+        <StatusChip
+          count={s.info_sessions_not_linked}
+          missingLabel="not linked to an exam center"
+          okLabel="All information sessions are linked to an exam center"
+        />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Applicants</SubHeading>
+          <span className="text-2xl font-bold leading-none">{s.applicants_total}</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <StatusChip
+            count={s.applicants_not_assigned}
+            missingLabel="not assigned to a center"
+            okLabel="All assigned to an exam center"
+          />
+          <StatusChip
+            count={s.applicants_without_schedule}
+            missingLabel="without a schedule"
+            okLabel="All have a schedule"
+          />
+        </div>
       </div>
     </SectionCardShell>
   );
@@ -357,9 +369,11 @@ export function ExamResultsCard({
 
   return (
     <SectionCardShell
+      icon={GraduationCap}
+      accent="emerald"
       title="Exam Results"
+      description="Outcomes of the entrance exam"
       canEdit={canEdit}
-      editTitle="Exam Results"
       groups={groups}
       values={s}
       onSave={async (values) => {
@@ -367,31 +381,29 @@ export function ExamResultsCard({
         onSaved();
       }}
     >
-      <div>
+      <div className="space-y-2.5">
         <SubHeading>Attendance</SubHeading>
-        <ul className="mt-1 list-disc space-y-0.5 pl-5">
-          <Bullet>{s.attended} attended</Bullet>
-          <Bullet>{s.absent} absent(s)</Bullet>
-          <Bullet>{s.partially_attended} partially attended</Bullet>
-          <Bullet className={s.still_to_be_done > 0 ? "text-red-600 font-medium" : undefined}>
-            {s.still_to_be_done} still to be done
-          </Bullet>
-        </ul>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <MetricTile value={s.attended} label="Attended" />
+          <MetricTile value={s.absent} label="Absent" />
+          <MetricTile value={s.partially_attended} label="Partial" />
+          <MetricTile value={s.still_to_be_done} label="To Do" tone={s.still_to_be_done > 0 ? "danger" : "default"} />
+        </div>
       </div>
 
-      <div>
-        <SubHeading>Passers</SubHeading>
-        <p className="mt-1 text-sm">
-          {s.passed}/{s.attended} applicants passed
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Passers</SubHeading>
+          <span className="text-sm font-medium text-muted-foreground">{pct(s.passed, s.attended)}% pass rate</span>
+        </div>
+        <p className="text-2xl font-bold leading-none">
+          {s.passed}
+          <span className="text-base font-medium text-muted-foreground">/{s.attended}</span>
         </p>
-        <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
-          <Bullet>
-            {s.passed_girls} ({pct(s.passed_girls, s.passed)}%) are girls
-          </Bullet>
-          <Bullet>
-            {s.passed_boys} ({pct(s.passed_boys, s.passed)}%) are boys
-          </Bullet>
-        </ul>
+        <ProgressBar value={s.passed} total={s.attended} />
+        <GenderSplit girls={s.passed_girls} boys={s.passed_boys} />
       </div>
     </SectionCardShell>
   );
@@ -443,9 +455,11 @@ export function InterviewCentersCard({
 
   return (
     <SectionCardShell
+      icon={Mic}
+      accent="violet"
       title="Interview Centers"
+      description="Venues hosting the interview round"
       canEdit={canEdit}
-      editTitle="Interview Centers"
       groups={groups}
       values={s}
       onSave={async (values) => {
@@ -453,46 +467,48 @@ export function InterviewCentersCard({
         onSaved();
       }}
     >
-      <div>
-        <p className="text-lg font-semibold">{s.centers_total} interview centers</p>
-        <ul className="mt-1 list-disc space-y-0.5 pl-5">
-          <Bullet>{s.sessions_done} sessions already done</Bullet>
-          <Bullet className={s.sessions_not_done > 0 ? "text-amber-600" : undefined}>
-            {s.sessions_not_done} session(s) scheduled not yet done
-          </Bullet>
-        </ul>
-      </div>
-
-      <div>
-        <SubHeading>From Exam Centers</SubHeading>
-        <div className="mt-1">
-          <GapLine
-            count={s.exam_centers_not_linked}
-            missingLabel="not linked to an interview center"
-            allDoneLabel="All exam centers are linked to an interview center"
-          />
+      <div className="space-y-2.5">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Centers</SubHeading>
+          <span className="text-2xl font-bold leading-none">{s.centers_total}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MetricTile value={s.sessions_done} label="Sessions Done" />
+          <MetricTile value={s.sessions_not_done} label="Not Done Yet" tone={s.sessions_not_done > 0 ? "warning" : "default"} />
         </div>
       </div>
 
-      <div>
-        <SubHeading>Applicants</SubHeading>
-        <p className="mt-1 text-sm">{s.applicants_eligible} applicant(s) eligible for interview</p>
-        <ul className="mt-0.5 space-y-0.5 pl-0">
-          <li>
-            <GapLine
-              count={s.applicants_not_assigned}
-              missingLabel="not assigned to an interview center"
-              allDoneLabel="All are assigned to an interview center"
-            />
-          </li>
-          <li>
-            <GapLine
-              count={s.applicants_without_schedule}
-              missingLabel="without a schedule"
-              allDoneLabel="All assigned have a schedule"
-            />
-          </li>
-        </ul>
+      <Separator />
+
+      <div className="space-y-2">
+        <SubHeading>From Exam Centers</SubHeading>
+        <StatusChip
+          count={s.exam_centers_not_linked}
+          missingLabel="not linked to an interview center"
+          okLabel="All exam centers are linked to an interview center"
+        />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Applicants</SubHeading>
+          <span className="text-2xl font-bold leading-none">{s.applicants_eligible}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">eligible for interview</p>
+        <div className="flex flex-wrap gap-2">
+          <StatusChip
+            count={s.applicants_not_assigned}
+            missingLabel="not assigned to a center"
+            okLabel="All assigned to an interview center"
+          />
+          <StatusChip
+            count={s.applicants_without_schedule}
+            missingLabel="without a schedule"
+            okLabel="All assigned have a schedule"
+          />
+        </div>
       </div>
     </SectionCardShell>
   );
@@ -539,9 +555,11 @@ export function InterviewResultsCard({
 
   return (
     <SectionCardShell
+      icon={ClipboardCheck}
+      accent="amber"
       title="Interview Results"
+      description="Outcomes of the interview round"
       canEdit={canEdit}
-      editTitle="Interview Results"
       groups={groups}
       values={s}
       onSave={async (values) => {
@@ -549,30 +567,28 @@ export function InterviewResultsCard({
         onSaved();
       }}
     >
-      <div>
+      <div className="space-y-2.5">
         <SubHeading>Attendance</SubHeading>
-        <ul className="mt-1 list-disc space-y-0.5 pl-5">
-          <Bullet>{s.attended} attended</Bullet>
-          <Bullet>{s.absent} absent(s)</Bullet>
-          <Bullet className={s.still_to_be_done > 0 ? "text-red-600 font-medium" : undefined}>
-            {s.still_to_be_done} still to be done
-          </Bullet>
-        </ul>
+        <div className="grid grid-cols-3 gap-2">
+          <MetricTile value={s.attended} label="Attended" />
+          <MetricTile value={s.absent} label="Absent" />
+          <MetricTile value={s.still_to_be_done} label="To Do" tone={s.still_to_be_done > 0 ? "danger" : "default"} />
+        </div>
       </div>
 
-      <div>
-        <SubHeading>Passers</SubHeading>
-        <p className="mt-1 text-sm">
-          {s.passed}/{s.attended} applicants passed
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <SubHeading>Passers</SubHeading>
+          <span className="text-sm font-medium text-muted-foreground">{pct(s.passed, s.attended)}% pass rate</span>
+        </div>
+        <p className="text-2xl font-bold leading-none">
+          {s.passed}
+          <span className="text-base font-medium text-muted-foreground">/{s.attended}</span>
         </p>
-        <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
-          <Bullet>
-            {s.passed_girls} ({pct(s.passed_girls, s.passed)}%) are girls
-          </Bullet>
-          <Bullet>
-            {s.passed_boys} ({pct(s.passed_boys, s.passed)}%) are boys
-          </Bullet>
-        </ul>
+        <ProgressBar value={s.passed} total={s.attended} />
+        <GenderSplit girls={s.passed_girls} boys={s.passed_boys} />
       </div>
     </SectionCardShell>
   );

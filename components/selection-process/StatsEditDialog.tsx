@@ -6,11 +6,13 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 export type StatsFieldGroup = { title: string; fields: { key: string; label: string }[] };
@@ -60,22 +62,27 @@ export function StatsEditDialog({
 
   return (
     <>
-      <Button variant="ghost" size="icon-sm" onClick={() => setOpen(true)} aria-label={`Edit ${title}`}>
-        <Pencil className="size-4" />
+      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
+        <Pencil className="size-3.5" />
+        Edit
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit {title}</DialogTitle>
+            <DialogDescription>Update the latest manually-tracked numbers for this section.</DialogDescription>
           </DialogHeader>
           <div className="space-y-5">
-            {groups.map((group) => (
-              <div key={group.title} className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">{group.title}</p>
+            {groups.map((group, i) => (
+              <div key={group.title} className="space-y-2.5">
+                {i > 0 && <Separator />}
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{group.title}</p>
                 <div className="grid grid-cols-2 gap-3">
                   {group.fields.map((field) => (
                     <div key={field.key} className="space-y-1">
-                      <Label htmlFor={field.key}>{field.label}</Label>
+                      <Label htmlFor={field.key} className="text-xs text-muted-foreground">
+                        {field.label}
+                      </Label>
                       <Input
                         id={field.key}
                         type="number"
@@ -89,7 +96,7 @@ export function StatsEditDialog({
               </div>
             ))}
             <Button onClick={handleSave} disabled={saving} className="w-full">
-              {saving ? "Saving..." : "Save"}
+              {saving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </DialogContent>
