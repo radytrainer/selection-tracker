@@ -19,7 +19,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { CycleSelect } from "@/components/forms/CycleSelect";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCycleFilter } from "@/hooks/useCycleFilter";
 import { Download } from "lucide-react";
 
 function toCsv(rows: ProvinceStats[]) {
@@ -49,15 +51,17 @@ function toCsv(rows: ProvinceStats[]) {
 }
 
 export default function ReportsPage() {
+  const { cycles, cycleId, setCycleId } = useCycleFilter();
   const [stats, setStats] = useState<ProvinceStats[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProvinceStats()
+    setLoading(true);
+    getProvinceStats(cycleId || undefined)
       .then(setStats)
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load report data"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [cycleId]);
 
   function handleExport() {
     const blob = new Blob([toCsv(stats)], { type: "text/csv;charset=utf-8;" });
@@ -100,10 +104,13 @@ export default function ReportsPage() {
             Selection pipeline progress by province, current cycle.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="size-4" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <CycleSelect cycles={cycles} value={cycleId} allowAll onChange={setCycleId} className="w-48" />
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="size-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

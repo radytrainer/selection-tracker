@@ -103,14 +103,17 @@ const FINALIST_SELECT =
  * "selected" is ordered A+ → B- (worst-off first); "waitlisted" has no
  * committee-defined order so it's left alphabetical by name.
  */
-export async function listFinalists(decision: "selected" | "waitlisted") {
+export async function listFinalists(decision: "selected" | "waitlisted", cycleId?: string) {
   const supabase = createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("students")
     .select(FINALIST_SELECT)
     .is("deleted_at", null)
     .eq("committee_decisions.decision", decision)
     .order("first_name", { ascending: true });
+  if (cycleId) query = query.eq("cycle_id", cycleId);
+
+  const { data, error } = await query;
 
   if (error) throw error;
   const list = (data ?? []) as unknown as StudentListItem[];

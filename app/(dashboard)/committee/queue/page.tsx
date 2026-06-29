@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
+import { CycleSelect } from "@/components/forms/CycleSelect";
+import { useCycleFilter } from "@/hooks/useCycleFilter";
 import { useRole } from "@/hooks/useRole";
 import { can } from "@/lib/rbac";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
@@ -50,6 +52,7 @@ const FINISHED_STORAGE_KEY = "committee-queue-finished-cases";
 
 export default function CommitteeQueuePage() {
   const { role } = useRole();
+  const { cycles, cycleId, setCycleId } = useCycleFilter();
   const canSeeQueue = can(role, "viewCommitteeRatings") || can(role, "rateCommitteeCandidate");
   const canFinish = role === "home_visit_team";
   const [queue, setQueue] = useState<CommitteeQueueItem[]>([]);
@@ -79,7 +82,7 @@ export default function CommitteeQueuePage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    return Promise.all([listCommitteeQueue(), listPendingApprovals()])
+    return Promise.all([listCommitteeQueue(cycleId || undefined), listPendingApprovals(cycleId || undefined)])
       .then(async ([q, a]) => {
         setQueue(q);
         setApprovals(a);
@@ -88,7 +91,7 @@ export default function CommitteeQueuePage() {
       })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load committee queue"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [cycleId]);
 
   useEffect(() => {
     load();
@@ -118,11 +121,14 @@ export default function CommitteeQueuePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Committee Queue</h1>
-        <p className="text-sm text-muted-foreground">
-          Students ready for a final decision, and decisions awaiting sign-off.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Committee Queue</h1>
+          <p className="text-sm text-muted-foreground">
+            Students ready for a final decision, and decisions awaiting sign-off.
+          </p>
+        </div>
+        <CycleSelect cycles={cycles} value={cycleId} allowAll onChange={setCycleId} className="w-48" />
       </div>
 
       {canSeeQueue && (

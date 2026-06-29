@@ -18,6 +18,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { CycleSelect } from "@/components/forms/CycleSelect";
+import { useCycleFilter } from "@/hooks/useCycleFilter";
 import { POOR_LEVELS, POOR_LEVEL_BADGE_CLASSES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -284,6 +286,7 @@ function FinalistTable({ data, emptyLabel }: { data: StudentListItem[]; emptyLab
 }
 
 export default function FinalistPage() {
+  const { cycles, cycleId, setCycleId } = useCycleFilter();
   const [selected, setSelected] = useState<StudentListItem[]>([]);
   const [waitlisted, setWaitlisted] = useState<StudentListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -292,8 +295,8 @@ export default function FinalistPage() {
     setLoading(true);
     try {
       const [selectedList, waitlistedList] = await Promise.all([
-        listFinalists("selected"),
-        listFinalists("waitlisted"),
+        listFinalists("selected", cycleId || undefined),
+        listFinalists("waitlisted", cycleId || undefined),
       ]);
       setSelected(selectedList);
       setWaitlisted(waitlistedList);
@@ -302,7 +305,7 @@ export default function FinalistPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [cycleId]);
 
   useEffect(() => {
     fetchData();
@@ -317,15 +320,18 @@ export default function FinalistPage() {
             Students the committee has decided on, grouped by outcome.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={loading}
-          onClick={() => exportFinalistsToExcel(selected, waitlisted)}
-        >
-          <Download className="size-4" />
-          Export to Excel
-        </Button>
+        <div className="flex items-center gap-2">
+          <CycleSelect cycles={cycles} value={cycleId} allowAll onChange={setCycleId} className="w-48" />
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() => exportFinalistsToExcel(selected, waitlisted)}
+          >
+            <Download className="size-4" />
+            Export to Excel
+          </Button>
+        </div>
       </div>
 
       {loading ? (

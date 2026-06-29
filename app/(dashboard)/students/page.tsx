@@ -8,6 +8,7 @@ import { listProvinces } from "@/services/lookupService";
 import { getMyProfile } from "@/services/userService";
 import { StudentsTable } from "@/components/tables/StudentsTable";
 import { StudentImportDialog } from "@/components/forms/StudentImportDialog";
+import { CycleSelect } from "@/components/forms/CycleSelect";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { RoleGate } from "@/components/layout/RoleGate";
 import { useAuth } from "@/hooks/useAuth";
+import { useCycleFilter } from "@/hooks/useCycleFilter";
 import { useRole } from "@/hooks/useRole";
 import { POOR_LEVELS, STUDENT_STATUSES } from "@/lib/constants";
 
@@ -27,6 +29,7 @@ const PAGE_SIZE = 25;
 export default function StudentsPage() {
   const { user } = useAuth();
   const { role } = useRole();
+  const { cycles, cycleId, setCycleId } = useCycleFilter();
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [data, setData] = useState<StudentListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -57,6 +60,7 @@ export default function StudentsPage() {
         status: status || undefined,
         poorLevel: poorLevel || undefined,
         provinceId: provinceId || undefined,
+        cycleId: cycleId || undefined,
       });
       setData(result.data);
       setTotal(result.total);
@@ -65,7 +69,7 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, status, poorLevel, provinceId]);
+  }, [page, search, status, poorLevel, provinceId, cycleId]);
 
   useEffect(() => {
     fetchStudents();
@@ -91,6 +95,16 @@ export default function StudentsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
+        <CycleSelect
+          cycles={cycles}
+          value={cycleId}
+          allowAll
+          className="w-48"
+          onChange={(value) => {
+            setPage(1);
+            setCycleId(value);
+          }}
+        />
         <Input
           placeholder="Search name or code..."
           value={search}

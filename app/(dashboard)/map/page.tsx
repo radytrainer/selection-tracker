@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapFilterGroup } from "@/components/map/MapFilterGroup";
 import { MapLegend } from "@/components/map/MapLegend";
 import { MapTotals } from "@/components/map/MapTotals";
+import { CycleSelect } from "@/components/forms/CycleSelect";
+import { useCycleFilter } from "@/hooks/useCycleFilter";
 import type { MapGenderFilter, MapLayerFilter } from "@/components/map/CambodiaMap";
 
 const CambodiaMap = dynamic(
@@ -40,6 +42,7 @@ const GENDER_FILTER_LABELS: Record<MapGenderFilter, string> = {
 
 export default function MapPage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { cycles, cycleId, setCycleId } = useCycleFilter();
   const [stats, setStats] = useState<ProvinceStats[]>([]);
   const [ngos, setNgos] = useState<MapPartner[]>([]);
   const [schools, setSchools] = useState<MapPartner[]>([]);
@@ -67,7 +70,7 @@ export default function MapPage() {
 
   const loadMapData = useCallback(() => {
     setLoading(true);
-    return Promise.all([getProvinceStats(), getMapPartners()])
+    return Promise.all([getProvinceStats(cycleId || undefined), getMapPartners()])
       .then(([provinceStats, partners]) => {
         setStats(provinceStats);
         setNgos(partners.ngos);
@@ -75,7 +78,7 @@ export default function MapPage() {
       })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load map data"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [cycleId]);
 
   useEffect(() => {
     loadMapData();
@@ -99,6 +102,10 @@ export default function MapPage() {
       )}
 
       <div className="absolute top-3 left-3 z-[1000] flex flex-col items-start gap-3">
+        <div className="space-y-1">
+          <p className="px-0.5 text-xs font-medium text-muted-foreground">Cycle</p>
+          <CycleSelect cycles={cycles} value={cycleId} allowAll onChange={setCycleId} className="w-40 bg-background shadow" />
+        </div>
         <div className="space-y-1">
           <p className="px-0.5 text-xs font-medium text-muted-foreground">Show</p>
           <MapFilterGroup

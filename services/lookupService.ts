@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 
+export type Cycle = { id: string; year: number; name: string; status: string };
+
 export async function listProvinces() {
   const supabase = createClient();
   const { data, error } = await supabase
