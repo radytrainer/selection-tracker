@@ -14,7 +14,7 @@ export const CAPABILITIES = {
   enterInterviewScores: ["super_admin", "program_manager", "interview_team"],
   enterHomeVisitData: ["super_admin", "program_manager", "home_visit_team"],
   recordCommitteeDecision: ["super_admin", "program_manager"],
-  rateCommitteeCandidate: ["committee_member"],
+  rateCommitteeCandidate: ["committee_member", "home_visit_team"],
   // Read-only oversight of how the committee voted (distribution, not who
   // voted what) — not the same as recordCommitteeDecision, which is the
   // actual Select/Waitlist/Reject/Eliminate power.
@@ -28,7 +28,7 @@ export const CAPABILITIES = {
     "home_visit_team",
     "committee_member",
   ],
-  generateReports: ["super_admin", "program_manager", "selection_team", "committee_member"],
+  generateReports: ["super_admin", "program_manager", "selection_team", "committee_member", "home_visit_team"],
 } as const satisfies Record<string, readonly AppRole[]>;
 
 export type Capability = keyof typeof CAPABILITIES;

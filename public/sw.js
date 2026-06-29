@@ -1,4 +1,4 @@
-const CACHE_NAME = "app-shell-v1";
+const CACHE_NAME = "app-shell-v2";
 const OFFLINE_URL = "/offline";
 
 self.addEventListener("install", (event) => {
@@ -32,7 +32,15 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
 
-  if (request.mode === "navigate") {
+  // Webpack's chunk filenames under /_next/static/ are content-hashed and
+  // immutable, so they're the only thing safe to serve cache-first.
+  // Everything else — full-page navigations AND the RSC data fetches the
+  // App Router makes for client-side <Link> transitions — must go to the
+  // network first. Those responses reference the *current* deployment's
+  // chunk hashes, so a stale cached copy from before the last deploy can
+  // point at chunks the new deployment no longer serves, crashing the page
+  // with module-mismatch errors ("X is not a function") on navigation.
+  if (!url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -42,7 +50,11 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))),
+        .catch(() =>
+          caches
+            .match(request)
+            .then((cached) => cached || (request.mode === "navigate" ? caches.match(OFFLINE_URL) : undefined)),
+        ),
     );
     return;
   }

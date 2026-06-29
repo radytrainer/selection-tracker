@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
-import { CreateUserForm } from "@/components/forms/CreateUserForm";
-import type { CreateUserValues } from "@/features/admin/schema";
+import { Pencil, UserPlus } from "lucide-react";
+import { UserForm } from "@/components/forms/UserForm";
+import type { CreateUserValues, UpdateUserValues } from "@/features/admin/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,12 +30,14 @@ type AdminUser = {
   status: string;
   created_at: string;
   role: string | null;
+  ngoId: string | null;
 };
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -67,6 +69,21 @@ export default function AdminUsersPage() {
     load();
   }
 
+  async function handleUpdate(values: UpdateUserValues) {
+    if (!editingUser) return;
+    const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error ?? "Failed to update user");
+
+    toast.success(`${values.fullName} updated`);
+    setEditingUser(null);
+    load();
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -90,12 +107,13 @@ export default function AdminUsersPage() {
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
                   No users yet.
                 </TableCell>
               </TableRow>
@@ -108,6 +126,11 @@ export default function AdminUsersPage() {
                     {u.role ? <Badge variant="outline">{u.role.replace(/_/g, " ")}</Badge> : "—"}
                   </TableCell>
                   <TableCell className="capitalize">{u.status}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon-sm" onClick={() => setEditingUser(u)}>
+                      <Pencil className="size-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -120,7 +143,28 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle>Create User</DialogTitle>
           </DialogHeader>
-          <CreateUserForm onSubmit={handleCreate} />
+          <UserForm onSubmit={handleCreate} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editingUser !== null} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          {editingUser && (
+            <UserForm
+              mode="edit"
+              defaultValues={{
+                email: editingUser.email,
+                fullName: editingUser.full_name,
+                role: (editingUser.role as UpdateUserValues["role"]) ?? "selection_team",
+                ngoId: editingUser.ngoId ?? "",
+                password: "",
+              }}
+              onSubmit={handleUpdate}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

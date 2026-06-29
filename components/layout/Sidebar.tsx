@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Award,
   BarChart3,
   Building2,
   ChevronLeft,
@@ -51,7 +52,7 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/committee/queue",
     label: "Committee Queue",
     icon: Gavel,
-    roles: ["super_admin", "program_manager", "selection_team", "committee_member"],
+    roles: ["super_admin", "program_manager", "selection_team", "committee_member", "home_visit_team"],
   },
   {
     href: "/ngos",
@@ -80,6 +81,12 @@ export const NAV_ITEMS: NavItem[] = [
       "ngo_partner",
       "donor",
     ],
+  },
+  {
+    href: "/finalist",
+    label: "Finalists",
+    icon: Award,
+    roles: ["super_admin", "program_manager", "selection_team", "committee_member", "home_visit_team"],
   },
   {
     href: "/reports",
@@ -173,7 +180,7 @@ export function Sidebar({ role }: { role: AppRole | null }) {
           collapsed ? "justify-center" : "justify-between",
         )}
       >
-        {!collapsed && <span className="truncate">Scholarship Tracker</span>}
+        {!collapsed && <span className="truncate">PNC Selection</span>}
         <button
           type="button"
           onClick={toggle}

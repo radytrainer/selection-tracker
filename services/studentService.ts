@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
+import { POOR_LEVELS } from "@/lib/constants";
 
 export type Student = Database["public"]["Tables"]["students"]["Row"];
 export type StudentInsert = Database["public"]["Tables"]["students"]["Insert"];
@@ -88,6 +89,37 @@ export async function listStudents(filters: StudentFilters) {
   if (error) throw error;
 
   return { data: (data ?? []) as unknown as StudentListItem[], total: count ?? 0, page, pageSize };
+}
+
+const FINALIST_SELECT =
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions!inner(decision, poor_level)";
+
+/**
+ * Students the committee has decided on, for the Finalist page's two tabs.
+ * "selected" is ordered A+ → B- (worst-off first); "waitlisted" has no
+ * committee-defined order so it's left alphabetical by name.
+ */
+export async function listFinalists(decision: "selected" | "waitlisted") {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("students")
+    .select(FINALIST_SELECT)
+    .is("deleted_at", null)
+    .eq("committee_decisions.decision", decision)
+    .order("first_name", { ascending: true });
+
+  if (error) throw error;
+  const list = (data ?? []) as unknown as StudentListItem[];
+
+  if (decision === "selected") {
+    list.sort((a, b) => {
+      const aIndex = POOR_LEVELS.indexOf(a.committee_decisions?.poor_level as never);
+      const bIndex = POOR_LEVELS.indexOf(b.committee_decisions?.poor_level as never);
+      return (aIndex === -1 ? POOR_LEVELS.length : aIndex) - (bIndex === -1 ? POOR_LEVELS.length : bIndex);
+    });
+  }
+
+  return list;
 }
 
 export async function getStudent(id: string) {

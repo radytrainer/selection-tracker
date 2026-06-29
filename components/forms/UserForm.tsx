@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { createUserSchema, type CreateUserValues } from "@/features/admin/schema";
+import {
+  createUserSchema,
+  updateUserSchema,
+  type CreateUserValues,
+  type UpdateUserValues,
+} from "@/features/admin/schema";
 import { listNgos, type NgoListItem } from "@/services/ngoService";
 import { APP_ROLES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -25,19 +30,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function CreateUserForm({
+type UserFormValues = CreateUserValues | UpdateUserValues;
+
+export function UserForm({
+  mode = "create",
+  defaultValues,
   onSubmit,
-  submitLabel = "Create User",
+  submitLabel,
 }: {
-  onSubmit: (values: CreateUserValues) => Promise<void>;
+  mode?: "create" | "edit";
+  defaultValues?: Partial<UserFormValues>;
+  onSubmit: (values: UserFormValues) => Promise<void>;
   submitLabel?: string;
 }) {
   const [ngos, setNgos] = useState<NgoListItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<CreateUserValues>({
-    resolver: zodResolver(createUserSchema),
-    defaultValues: { email: "", password: "", fullName: "", role: "selection_team", ngoId: "" },
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(mode === "edit" ? updateUserSchema : createUserSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      fullName: "",
+      role: "selection_team",
+      ngoId: "",
+      ...defaultValues,
+    },
   });
 
   const role = form.watch("role");
@@ -48,13 +66,13 @@ export function CreateUserForm({
     }
   }, [role]);
 
-  async function handleSubmit(values: CreateUserValues) {
+  async function handleSubmit(values: UserFormValues) {
     setIsSubmitting(true);
     try {
       await onSubmit(values);
-      form.reset();
+      if (mode === "create") form.reset();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create user");
+      toast.error(error instanceof Error ? error.message : "Failed to save user");
     } finally {
       setIsSubmitting(false);
     }
@@ -94,7 +112,7 @@ export function CreateUserForm({
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{mode === "edit" ? "New Password (leave blank to keep current)" : "Password"}</FormLabel>
               <FormControl>
                 <Input type="password" autoComplete="new-password" {...field} />
               </FormControl>
@@ -135,7 +153,7 @@ export function CreateUserForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>NGO</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value ?? ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select NGO">
@@ -157,7 +175,7 @@ export function CreateUserForm({
           />
         )}
         <Button type="submit" disabled={isSubmitting}>
-          {submitLabel}
+          {submitLabel ?? (mode === "edit" ? "Save Changes" : "Create User")}
         </Button>
       </form>
     </Form>

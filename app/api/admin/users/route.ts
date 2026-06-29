@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       // user_roles has two FKs to users (user_id and granted_by), so the
       // embed must name the constraint explicitly — PostgREST otherwise
       // rejects the query with a 300 "more than one relationship" error.
-      "id, email, full_name, status, created_at, user_roles!user_roles_user_id_fkey(roles(name))",
+      "id, email, full_name, status, created_at, user_roles!user_roles_user_id_fkey(roles(name)), user_ngo_link(ngo_id)",
     )
     .order("created_at", { ascending: false });
 
@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       status: string;
       created_at: string;
       user_roles: { roles: { name: string } | null }[];
+      user_ngo_link: { ngo_id: string }[];
     }[]
   ).map((u) => ({
     id: u.id,
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
     status: u.status,
     created_at: u.created_at,
     role: u.user_roles[0]?.roles?.name ?? null,
+    ngoId: u.user_ngo_link[0]?.ngo_id ?? null,
   }));
 
   return NextResponse.json({ users });

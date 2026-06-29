@@ -19,3 +19,19 @@ export const createUserSchema = z
   });
 
 export type CreateUserValues = z.infer<typeof createUserSchema>;
+
+/** Same shape as create, except password is optional — leaving it blank keeps the current one. */
+export const updateUserSchema = z
+  .object({
+    email: z.string().email("Enter a valid email address"),
+    password: z.union([z.string().min(6, "Password must be at least 6 characters"), z.literal("")]),
+    fullName: z.string().min(1, "Full name is required"),
+    role: z.enum(APP_ROLES),
+    ngoId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
+  })
+  .refine((data) => data.role !== "ngo_partner" || !!data.ngoId, {
+    message: "Select an NGO for the ngo_partner role",
+    path: ["ngoId"],
+  });
+
+export type UpdateUserValues = z.infer<typeof updateUserSchema>;

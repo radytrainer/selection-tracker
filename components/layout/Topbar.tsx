@@ -99,7 +99,7 @@ export function Topbar() {
           className="top-0 left-0 h-full w-72 max-w-[85%] translate-x-0 translate-y-0 grid-rows-[auto_1fr] gap-4 rounded-none border-r p-4 data-open:slide-in-from-left data-open:zoom-in-100 data-closed:slide-out-to-left data-closed:zoom-out-100"
         >
           <DialogTitle className="px-2 text-sm font-semibold tracking-tight">
-            Scholarship Tracker
+            PNC Selection
           </DialogTitle>
           <SidebarNav role={role} onNavigate={() => setMobileNavOpen(false)} />
         </DialogContent>
