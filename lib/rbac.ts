@@ -17,7 +17,7 @@ export const CAPABILITIES = {
   sendToCommittee: ["super_admin", "program_manager", "selection_team", "home_visit_team"],
   enterExamScores: ["super_admin", "program_manager", "selection_team"],
   enterInterviewScores: ["super_admin", "program_manager", "interview_team"],
-  enterHomeVisitData: ["super_admin", "program_manager", "home_visit_team"],
+  enterHomeVisitData: ["super_admin", "program_manager", "home_visit_team", "selection_team"],
   recordCommitteeDecision: ["super_admin", "program_manager", "selection_team"],
   rateCommitteeCandidate: ["committee_member"],
   // Read-only oversight of how the committee voted (distribution, not who
