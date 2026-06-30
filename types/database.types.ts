@@ -434,18 +434,24 @@ export type Database = {
           id: string;
           student_id: string;
           cycle_id: string;
-          communication_score: number | null;
-          leadership_score: number | null;
-          motivation_score: number | null;
-          confidence_score: number | null;
-          critical_thinking_score: number | null;
+          q1_score: number | null;
+          q2_score: number | null;
+          q3_score: number | null;
+          q4_score: number | null;
+          q5_score: number | null;
+          q6_score: number | null;
+          q7_score: number | null;
+          q8_score: number | null;
+          q9_score: number | null;
+          q10_score: number | null;
+          q11_score: number | null;
+          q12_score: number | null;
+          q13_score: number | null;
+          q14_score: number | null;
+          q15_score: number | null;
+          q16_score: number | null;
           comments: string | null;
-          recommendation:
-            | "strongly_recommend"
-            | "recommend"
-            | "neutral"
-            | "not_recommend"
-            | null;
+          recommendation: "A1" | "A2" | "not_recommended" | null;
           interviewer_id: string | null;
           interview_date: string;
           created_at: string;
@@ -455,18 +461,24 @@ export type Database = {
           id?: string;
           student_id: string;
           cycle_id: string;
-          communication_score?: number | null;
-          leadership_score?: number | null;
-          motivation_score?: number | null;
-          confidence_score?: number | null;
-          critical_thinking_score?: number | null;
+          q1_score?: number | null;
+          q2_score?: number | null;
+          q3_score?: number | null;
+          q4_score?: number | null;
+          q5_score?: number | null;
+          q6_score?: number | null;
+          q7_score?: number | null;
+          q8_score?: number | null;
+          q9_score?: number | null;
+          q10_score?: number | null;
+          q11_score?: number | null;
+          q12_score?: number | null;
+          q13_score?: number | null;
+          q14_score?: number | null;
+          q15_score?: number | null;
+          q16_score?: number | null;
           comments?: string | null;
-          recommendation?:
-            | "strongly_recommend"
-            | "recommend"
-            | "neutral"
-            | "not_recommend"
-            | null;
+          recommendation?: "A1" | "A2" | "not_recommended" | null;
           interviewer_id?: string | null;
           interview_date?: string;
           created_at?: string;

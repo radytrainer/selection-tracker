@@ -29,13 +29,7 @@ export default function InterviewEntryPage() {
         studentId: student.id,
         cycleId: student.cycle_id,
         currentStatus: student.status,
-        communicationScore: values.communication_score,
-        leadershipScore: values.leadership_score,
-        motivationScore: values.motivation_score,
-        confidenceScore: values.confidence_score,
-        criticalThinkingScore: values.critical_thinking_score,
-        comments: values.comments || null,
-        recommendation: values.recommendation,
+        formValues: values,
       });
       toast.success("Interview saved");
       router.push(`/students/${student.id}`);
@@ -57,30 +51,38 @@ export default function InterviewEntryPage() {
     return <p className="text-sm text-muted-foreground">Student not found.</p>;
   }
 
+  const iv = student.interviews;
+  const defaultValues: Partial<InterviewFormValues> | undefined = iv
+    ? {
+        q1_score: iv.q1_score ?? 0,
+        q2_score: iv.q2_score ?? 0,
+        q3_score: iv.q3_score ?? 0,
+        q4_score: iv.q4_score ?? 0,
+        q5_score: iv.q5_score ?? 0,
+        q6_score: iv.q6_score ?? 0,
+        q7_score: iv.q7_score ?? 0,
+        q8_score: iv.q8_score ?? 0,
+        q9_score: iv.q9_score ?? 0,
+        q10_score: iv.q10_score ?? 0,
+        q11_score: iv.q11_score ?? 0,
+        q12_score: iv.q12_score ?? 0,
+        q13_score: iv.q13_score ?? 0,
+        q14_score: iv.q14_score ?? 0,
+        q15_score: iv.q15_score ?? 0,
+        q16_score: iv.q16_score ?? 0,
+        comments: iv.comments ?? "",
+      }
+    : undefined;
+
   return (
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">
-          Interview — {student.first_name} {student.last_name}
+          Self-Assessment — {student.first_name} {student.last_name}
         </h1>
         <p className="text-sm text-muted-foreground">{student.student_code}</p>
       </div>
-      <InterviewForm
-        defaultValues={
-          student.interviews
-            ? {
-                communication_score: student.interviews.communication_score ?? 0,
-                leadership_score: student.interviews.leadership_score ?? 0,
-                motivation_score: student.interviews.motivation_score ?? 0,
-                confidence_score: student.interviews.confidence_score ?? 0,
-                critical_thinking_score: student.interviews.critical_thinking_score ?? 0,
-                comments: student.interviews.comments ?? "",
-                recommendation: student.interviews.recommendation ?? "neutral",
-              }
-            : undefined
-        }
-        onSubmit={handleSubmit}
-      />
+      <InterviewForm defaultValues={defaultValues} onSubmit={handleSubmit} />
     </div>
   );
 }

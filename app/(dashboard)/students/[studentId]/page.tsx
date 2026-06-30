@@ -44,10 +44,9 @@ import { can } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
-  strongly_recommend: "Strongly Recommend",
-  recommend: "Recommend",
-  neutral: "Neutral",
-  not_recommend: "Do Not Recommend",
+  A1: "A1",
+  A2: "A2",
+  not_recommended: "Not Recommended",
 };
 
 const PIPELINE_STAGES: { status: string; label: string }[] = [
@@ -365,27 +364,40 @@ export default function StudentDetailPage() {
         <TabsContent value="interview" className="mt-4 space-y-4">
           {student.interviews ? (
             <>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                <StatCard icon={Mic} label="Communication" value={`${student.interviews.communication_score}/5`} />
-                <StatCard icon={UsersRound} label="Leadership" value={`${student.interviews.leadership_score}/5`} />
-                <StatCard icon={HeartHandshake} label="Motivation" value={`${student.interviews.motivation_score}/5`} />
-                <StatCard icon={User} label="Confidence" value={`${student.interviews.confidence_score}/5`} />
-                <StatCard icon={GraduationCap} label="Critical Thinking" value={`${student.interviews.critical_thinking_score}/5`} />
-              </div>
-              <SectionCard icon={Mic} title="Recommendation" description="Interviewer's overall assessment">
-                <Field
-                  label="Recommendation"
-                  value={
-                    student.interviews.recommendation ? RECOMMENDATION_LABELS[student.interviews.recommendation] : "—"
-                  }
-                />
-                {student.interviews.comments && (
-                  <div className="py-1.5 text-sm">
-                    <p className="text-muted-foreground">Comments</p>
-                    <p className="mt-1">{student.interviews.comments}</p>
-                  </div>
-                )}
-              </SectionCard>
+              {(() => {
+                const iv = student.interviews;
+                const motivationTotal =
+                  (iv.q1_score ?? 0) + (iv.q2_score ?? 0) + (iv.q3_score ?? 0) +
+                  (iv.q4_score ?? 0) + (iv.q5_score ?? 0) + (iv.q6_score ?? 0);
+                const resilienceTotal =
+                  (iv.q7_score ?? 0) + (iv.q8_score ?? 0) + (iv.q9_score ?? 0) + (iv.q10_score ?? 0);
+                const collaborationTotal =
+                  (iv.q11_score ?? 0) + (iv.q12_score ?? 0) + (iv.q13_score ?? 0) +
+                  (iv.q14_score ?? 0) + (iv.q15_score ?? 0) + (iv.q16_score ?? 0);
+                const total = motivationTotal + resilienceTotal + collaborationTotal;
+                return (
+                  <>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <StatCard icon={Mic} label="Total Score" value={`${total} / 80`} />
+                      <StatCard icon={GraduationCap} label="Motivation in TI" value={`${motivationTotal} / 30`} />
+                      <StatCard icon={HeartHandshake} label="Study Resilience" value={`${resilienceTotal} / 20`} />
+                      <StatCard icon={UsersRound} label="Group Work" value={`${collaborationTotal} / 30`} />
+                    </div>
+                    <SectionCard icon={Mic} title="Grade" description="Computed from self-assessment total">
+                      <Field
+                        label="Grade"
+                        value={iv.recommendation ? RECOMMENDATION_LABELS[iv.recommendation] : "—"}
+                      />
+                      {iv.comments && (
+                        <div className="py-1.5 text-sm">
+                          <p className="text-muted-foreground">Comments</p>
+                          <p className="mt-1">{iv.comments}</p>
+                        </div>
+                      )}
+                    </SectionCard>
+                  </>
+                );
+              })()}
             </>
           ) : (
             <p className="text-sm text-muted-foreground">No interview recorded yet.</p>
