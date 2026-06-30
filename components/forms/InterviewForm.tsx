@@ -267,7 +267,7 @@ export function InterviewForm({
                                 {number}.
                               </span>
                               <div className="space-y-0.5 min-w-0">
-                                <p className="text-sm leading-snug">{q.km}</p>
+                                <p className="text-sm leading-snug" style={{ fontFamily: "var(--font-battambang)" }}>{q.km}</p>
                                 <p className="text-xs text-muted-foreground leading-snug">{q.en}</p>
                               </div>
                             </div>
