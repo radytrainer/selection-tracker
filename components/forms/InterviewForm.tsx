@@ -188,8 +188,6 @@ function ScoreSummary({ values }: { values: InterviewFormValues }) {
   );
 }
 
-let questionCounter = 0;
-
 export function InterviewForm({
   defaultValues,
   onSubmit,
