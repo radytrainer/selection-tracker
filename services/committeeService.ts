@@ -20,7 +20,7 @@ export type CommitteeQueueItem = {
   // PostgREST embeds them as a single to-one object (or null).
   exam_results: { total_score: number; rank_in_cycle: number | null; pass_status: string | null } | null;
   interviews: { recommendation: string | null } | null;
-  social_assessments: { final_score: number; category: string; visitor_comments: string | null }[];
+  social_assessments: { final_score: number; category: string; visitor_comments: string | null; visitor_id: string | null }[];
   student_documents: { doc_type: string; file_path: string; uploaded_at: string }[];
   committee_ratings: CommitteeRatingRow[];
 };
@@ -30,7 +30,7 @@ const QUEUE_SELECT = `
   provinces(name_en), school_partners(school_name),
   exam_results(total_score, rank_in_cycle, pass_status),
   interviews(recommendation),
-  social_assessments(final_score, category, visitor_comments),
+  social_assessments(final_score, category, visitor_comments, visitor_id),
   student_documents(doc_type, file_path, uploaded_at),
   committee_ratings(*)
 `;

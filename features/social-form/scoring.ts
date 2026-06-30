@@ -20,6 +20,7 @@ export const PARENT_OCCUPATION_POINTS = {
   unemployed: 0,
   daily_laborer: 1,
   farmer: 2,
+  mother: 2,
   small_business: 2,
   stable_salaried: 3,
 } as const;
@@ -58,6 +59,8 @@ export type SocialFormScoreInput = {
   household_size_band?: keyof typeof HOUSEHOLD_SIZE_POINTS | null;
   dependents_band?: keyof typeof DEPENDENTS_POINTS | null;
   parent_occupation_band?: keyof typeof PARENT_OCCUPATION_POINTS | null;
+  father_occupation_band?: keyof typeof PARENT_OCCUPATION_POINTS | null;
+  mother_occupation_band?: keyof typeof PARENT_OCCUPATION_POINTS | null;
   housing_type_band?: keyof typeof HOUSING_TYPE_POINTS | null;
   house_status_band?: keyof typeof HOUSE_STATUS_POINTS | null;
   water_access_band?: keyof typeof WATER_ACCESS_POINTS | null;
@@ -119,12 +122,23 @@ export function computeSocialFormScore(input: SocialFormScoreInput) {
       2,
   );
 
+  // Average the two per-parent occupation bands when available; fall back to the
+  // legacy combined field for assessments recorded before the split.
+  const parentOccupationScore =
+    input.father_occupation_band != null || input.mother_occupation_band != null
+      ? Math.round(
+          (points(PARENT_OCCUPATION_POINTS, input.father_occupation_band) +
+            points(PARENT_OCCUPATION_POINTS, input.mother_occupation_band)) /
+            2,
+        )
+      : points(PARENT_OCCUPATION_POINTS, input.parent_occupation_band);
+
   const totalScore =
     points(HEALTH_STATUS_POINTS, input.health_status) +
     points(ACADEMIC_RANK_POINTS, input.academic_rank) +
     points(HOUSEHOLD_SIZE_POINTS, input.household_size_band) +
     points(DEPENDENTS_POINTS, input.dependents_band) +
-    points(PARENT_OCCUPATION_POINTS, input.parent_occupation_band) +
+    parentOccupationScore +
     points(HOUSING_TYPE_POINTS, input.housing_type_band) +
     points(HOUSE_STATUS_POINTS, input.house_status_band) +
     points(WATER_ACCESS_POINTS, input.water_access_band) +

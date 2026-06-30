@@ -144,7 +144,10 @@ export default function CommitteeDossierPage() {
   const decision = student.committee_decisions?.decision ?? null;
   const banner = decision ? DECISION_BANNER[decision] : null;
   const canSeeDecision = can(role, "recordCommitteeDecision");
-  const canRate = can(role, "rateCommitteeCandidate");
+  const isOwnStudent = myUserId != null && student.social_assessments.some((sa) => sa.visitor_id === myUserId);
+  // home_visit_team can vote on students whose social form they didn't record;
+  // for their own students they remain observers (see rating chart only).
+  const canRate = can(role, "rateCommitteeCandidate") || (role === "home_visit_team" && !isOwnStudent);
   const canSeeRatingChart = can(role, "viewCommitteeRatings");
 
   return (

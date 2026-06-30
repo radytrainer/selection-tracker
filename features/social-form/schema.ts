@@ -4,6 +4,7 @@ import { z } from "zod";
 // filled in the field where connectivity/time is limited, and partial saves
 // should still be possible. Unanswered bands simply score 0 (see scoring.ts).
 export const socialFormSchema = z.object({
+  gender: z.enum(["male", "female", "lgbtqia+"]).optional(),
   health_status: z.enum(["healthy", "simple_disease", "chronic_disease"]).optional(),
   ok_to_join_training: z.string().optional().or(z.literal("")),
   academic_rank: z.enum(["outstanding_ab", "good_cd", "average_e"]).optional(),
@@ -17,7 +18,13 @@ export const socialFormSchema = z.object({
   mother_age: z.string().optional().or(z.literal("")),
   mother_job: z.string().optional().or(z.literal("")),
   parent_occupation_band: z
-    .enum(["unemployed", "daily_laborer", "farmer", "small_business", "stable_salaried"])
+    .enum(["unemployed", "daily_laborer", "farmer", "mother", "small_business", "stable_salaried"])
+    .optional(),
+  father_occupation_band: z
+    .enum(["unemployed", "daily_laborer", "farmer", "mother", "small_business", "stable_salaried"])
+    .optional(),
+  mother_occupation_band: z
+    .enum(["unemployed", "daily_laborer", "farmer", "mother", "small_business", "stable_salaried"])
     .optional(),
 
   house_owner: z.string().optional().or(z.literal("")),

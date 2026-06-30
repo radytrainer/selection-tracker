@@ -45,7 +45,7 @@ export type StudentFilters = {
   provinceId?: string;
   status?: string;
   gender?: string;
-  poorLevel?: string;
+  homeVisitor?: string;
   search?: string;
   page?: number;
   pageSize?: number;
@@ -53,11 +53,10 @@ export type StudentFilters = {
 
 const STUDENT_LIST_SELECT =
   "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level), social_assessments(visitor_id, visitor_name, visit_number)";
-// Filtering on an embedded table's column requires an inner join (PostgREST)
-// — only switch to it when poorLevel is actually filtered, otherwise this
-// embed must stay a left join so students with no decision yet still show.
-const STUDENT_LIST_SELECT_POOR_LEVEL =
-  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions!inner(decision, poor_level), social_assessments(visitor_id, visitor_name, visit_number)";
+// Inner join on social_assessments when filtering by home visitor — students
+// with no social form are excluded, which is correct (they have no visitor).
+const STUDENT_LIST_SELECT_VISITOR =
+  "*, provinces(name_en), school_partners(school_name), ngo_partners(organization_name), committee_decisions(decision, poor_level), social_assessments!inner(visitor_id, visitor_name, visit_number)";
 
 export async function listStudents(filters: StudentFilters) {
   const supabase = createClient();
@@ -68,21 +67,18 @@ export async function listStudents(filters: StudentFilters) {
 
   let query = supabase
     .from("students")
-    .select(filters.poorLevel ? STUDENT_LIST_SELECT_POOR_LEVEL : STUDENT_LIST_SELECT, { count: "exact" })
+    .select(filters.homeVisitor ? STUDENT_LIST_SELECT_VISITOR : STUDENT_LIST_SELECT, { count: "exact" })
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(from, to);
 
   if (filters.cycleId) query = query.eq("cycle_id", filters.cycleId);
-  if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
+  // "__none__" is a sentinel value meaning "province not set"
+  if (filters.provinceId === "__none__") query = query.is("province_id", null);
+  else if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
   if (filters.status) query = query.eq("status", filters.status as Student["status"]);
   if (filters.gender) query = query.eq("gender", filters.gender as Student["gender"]);
-  if (filters.poorLevel) {
-    query = query.eq(
-      "committee_decisions.poor_level",
-      filters.poorLevel as NonNullable<Database["public"]["Tables"]["committee_decisions"]["Row"]["poor_level"]>,
-    );
-  }
+  if (filters.homeVisitor) query = query.eq("social_assessments.visitor_name", filters.homeVisitor);
   if (filters.search) {
     query = query.or(
       `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,student_code.ilike.%${filters.search}%`,
@@ -93,6 +89,24 @@ export async function listStudents(filters: StudentFilters) {
   if (error) throw error;
 
   return { data: (data ?? []) as unknown as StudentListItem[], total: count ?? 0, page, pageSize };
+}
+
+/** Distinct home visitor names that appear in social assessments, for the filter dropdown. */
+export async function listHomeVisitors(cycleId?: string): Promise<string[]> {
+  const supabase = createClient();
+  let query = supabase
+    .from("social_assessments")
+    .select("visitor_name")
+    .not("visitor_name", "is", null)
+    .not("visitor_name", "eq", "");
+  if (cycleId) query = query.eq("cycle_id", cycleId);
+  const { data, error } = await query;
+  if (error) throw error;
+  const names = new Set<string>();
+  for (const row of data ?? []) {
+    if (row.visitor_name) names.add(row.visitor_name);
+  }
+  return Array.from(names).sort();
 }
 
 const FINALIST_SELECT =
@@ -236,6 +250,16 @@ export async function softDeleteStudent(id: string) {
     .from("students")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id);
+  if (error) throw error;
+}
+
+export async function bulkSoftDeleteStudents(ids: string[]) {
+  if (ids.length === 0) return;
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("students")
+    .update({ deleted_at: new Date().toISOString() })
+    .in("id", ids);
   if (error) throw error;
 }
 

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Award,
-  BarChart3,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -99,12 +98,6 @@ export const NAV_ITEMS: NavItem[] = [
       "home_visit_team",
       "committee_member",
     ],
-  },
-  {
-    href: "/reports",
-    label: "Reports",
-    icon: BarChart3,
-    roles: ["super_admin", "program_manager", "selection_team"],
   },
   { href: "/admin/users", label: "Users", icon: ShieldCheck, roles: ["super_admin"] },
 ];

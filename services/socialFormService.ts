@@ -31,6 +31,7 @@ type SaveInput = SocialFormScoreInput & {
   cycleId: string;
   visitNumber: number;
   currentStatus: StudentStatus;
+  gender?: "male" | "female" | "lgbtqia+" | null;
   ok_to_join_training: string | null;
   household_size_note: string | null;
   dependents_note: string | null;
@@ -38,6 +39,8 @@ type SaveInput = SocialFormScoreInput & {
   father_job: string | null;
   mother_age: number | null;
   mother_job: string | null;
+  father_occupation_band?: string | null;
+  mother_occupation_band?: string | null;
   house_owner: string | null;
   income_note: string | null;
   expenses_note: string | null;
@@ -72,6 +75,8 @@ export async function saveSocialAssessment(input: SaveInput) {
     mother_age: input.mother_age,
     mother_job: input.mother_job,
     parent_occupation_band: input.parent_occupation_band,
+    father_occupation_band: input.father_occupation_band ?? null,
+    mother_occupation_band: input.mother_occupation_band ?? null,
     house_owner: input.house_owner,
     housing_type_band: input.housing_type_band,
     house_status_band: input.house_status_band,
@@ -133,12 +138,22 @@ export async function saveSocialAssessment(input: SaveInput) {
   if (error) throw error;
 
   const nextStatus = advanceStatus(input.currentStatus, "home_visit_completed");
-  if (nextStatus !== input.currentStatus) {
-    const { error: statusError } = await supabase
+  const statusChanged = nextStatus !== input.currentStatus;
+  const genderChanged = !!input.gender;
+  // Skip the student update when status isn't advancing and the student is already
+  // in committee_review — home_visit_team RLS WITH CHECK requires visitor_id to
+  // match at that stage, and pre-0026 rows have visitor_id = null.
+  const shouldUpdateStudent =
+    statusChanged || (genderChanged && input.currentStatus !== "committee_review");
+  if (shouldUpdateStudent) {
+    const { error: studentError } = await supabase
       .from("students")
-      .update({ status: nextStatus })
+      .update({
+        ...(statusChanged ? { status: nextStatus } : {}),
+        ...(genderChanged ? { gender: input.gender! } : {}),
+      })
       .eq("id", input.studentId);
-    if (statusError) throw statusError;
+    if (studentError) throw studentError;
   }
 
   return score;

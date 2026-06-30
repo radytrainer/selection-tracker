@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { listStudents, type StudentListItem } from "@/services/studentService";
+import { listStudents, listHomeVisitors, type StudentListItem } from "@/services/studentService";
 import { listProvinces } from "@/services/lookupService";
 import { getMyProfile } from "@/services/userService";
 import { StudentsTable } from "@/components/tables/StudentsTable";
@@ -22,7 +22,7 @@ import { RoleGate } from "@/components/layout/RoleGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useCycleFilter } from "@/hooks/useCycleFilter";
 import { useRole } from "@/hooks/useRole";
-import { POOR_LEVELS, STUDENT_STATUSES } from "@/lib/constants";
+import { STUDENT_STATUSES } from "@/lib/constants";
 
 const PAGE_SIZE = 25;
 
@@ -37,13 +37,20 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
-  const [poorLevel, setPoorLevel] = useState<string>("");
+  const [homeVisitor, setHomeVisitor] = useState<string>("");
   const [provinceId, setProvinceId] = useState<string>("");
   const [provinces, setProvinces] = useState<{ id: string; name_en: string }[]>([]);
+  const [homeVisitors, setHomeVisitors] = useState<string[]>([]);
 
   useEffect(() => {
     listProvinces().then(setProvinces).catch(() => toast.error("Failed to load provinces"));
   }, []);
+
+  useEffect(() => {
+    listHomeVisitors(cycleId || undefined)
+      .then(setHomeVisitors)
+      .catch(() => {});
+  }, [cycleId]);
 
   useEffect(() => {
     if (!user) return;
@@ -58,7 +65,7 @@ export default function StudentsPage() {
         pageSize: PAGE_SIZE,
         search: search || undefined,
         status: status || undefined,
-        poorLevel: poorLevel || undefined,
+        homeVisitor: homeVisitor || undefined,
         provinceId: provinceId || undefined,
         cycleId: cycleId || undefined,
       });
@@ -69,7 +76,7 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, status, poorLevel, provinceId, cycleId]);
+  }, [page, search, status, homeVisitor, provinceId, cycleId]);
 
   useEffect(() => {
     fetchStudents();
@@ -85,7 +92,18 @@ export default function StudentsPage() {
           </p>
         </div>
         <RoleGate capability="createEditStudents">
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <CycleSelect
+              cycles={cycles}
+              value={cycleId}
+              allowAll
+              className="w-48"
+              onChange={(value) => {
+                setPage(1);
+                setHomeVisitor("");
+                setCycleId(value);
+              }}
+            />
             <StudentImportDialog onImported={fetchStudents} />
             <Link href="/students/new" className={buttonVariants()}>
               New Student
@@ -95,16 +113,6 @@ export default function StudentsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <CycleSelect
-          cycles={cycles}
-          value={cycleId}
-          allowAll
-          className="w-48"
-          onChange={(value) => {
-            setPage(1);
-            setCycleId(value);
-          }}
-        />
         <Input
           placeholder="Search name or code..."
           value={search}
@@ -136,22 +144,22 @@ export default function StudentsPage() {
           </SelectContent>
         </Select>
         <Select
-          value={poorLevel}
+          value={homeVisitor}
           onValueChange={(value) => {
             setPage(1);
-            setPoorLevel(value ?? "");
+            setHomeVisitor(value ?? "");
           }}
         >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All Poor Levels">
-              {(value: string) => (value ? value : "All Poor Levels")}
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All visitors">
+              {(value: string) => value || "All visitors"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Poor Levels</SelectItem>
-            {POOR_LEVELS.map((level) => (
-              <SelectItem key={level} value={level}>
-                {level}
+            <SelectItem value="">All visitors</SelectItem>
+            {homeVisitors.map((v) => (
+              <SelectItem key={v} value={v}>
+                {v}
               </SelectItem>
             ))}
           </SelectContent>
@@ -165,11 +173,16 @@ export default function StudentsPage() {
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All provinces">
-              {(value: string) => (value ? provinces.find((p) => p.id === value)?.name_en : "All provinces")}
+              {(value: string) => {
+                if (!value) return "All provinces";
+                if (value === "__none__") return "No province";
+                return provinces.find((p) => p.id === value)?.name_en ?? "All provinces";
+              }}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All provinces</SelectItem>
+            <SelectItem value="__none__">No province set</SelectItem>
             {provinces.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name_en}

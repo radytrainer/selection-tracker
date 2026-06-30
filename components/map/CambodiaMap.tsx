@@ -8,7 +8,7 @@ import { CAMBODIA_BOUNDS, CAMBODIA_CENTER, PROVINCE_COORDINATES } from "@/lib/ca
 import type { MapPartner, ProvinceStats } from "@/services/mapService";
 
 export type MapColorBy = "students" | "ngos" | "schools";
-export type MapGenderFilter = "all" | "male" | "female" | "other";
+export type MapGenderFilter = "all" | "male" | "female" | "lgbtqia+";
 export type MapLayerFilter = "all" | "students" | "ngos" | "schools";
 
 function colorForCount(count: number, max: number) {
@@ -23,7 +23,7 @@ function colorForCount(count: number, max: number) {
 function studentValue(province: ProvinceStats, genderFilter: MapGenderFilter) {
   if (genderFilter === "male") return province.maleStudents;
   if (genderFilter === "female") return province.femaleStudents;
-  if (genderFilter === "other") return province.otherStudents;
+  if (genderFilter === "lgbtqia+") return province.otherStudents;
   return province.totalStudents;
 }
 

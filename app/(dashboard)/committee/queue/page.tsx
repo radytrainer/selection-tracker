@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, RotateCcw } from "lucide-react";
 import {
   approveCommitteeDecision,
   listCommitteeQueue,
@@ -11,6 +11,7 @@ import {
   type CommitteeQueueItem,
   type PendingApproval,
 } from "@/services/committeeService";
+import { getMyProfile } from "@/services/userService";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RoleGate } from "@/components/layout/RoleGate";
 import { CycleSelect } from "@/components/forms/CycleSelect";
 import { useCycleFilter } from "@/hooks/useCycleFilter";
+import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { can } from "@/lib/rbac";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
@@ -44,17 +46,18 @@ function ratingSummary(student: CommitteeQueueItem) {
   return `${avg.toFixed(1)}★ avg · ${raters} member${raters === 1 ? "" : "s"} rated`;
 }
 
-// home_visit_team doesn't vote or decide — "Finished" just clears a case
-// from their own view of the queue once they've seen the committee's
-// ratings. Local-only (per browser), it doesn't touch the student's status
-// or what selection_team/super_admin see.
+// home_visit_team doesn't decide — "Finished" clears their own cases from
+// the active queue once they've seen the committee's ratings. Local-only
+// (per browser); doesn't affect what selection_team/super_admin see.
 const FINISHED_STORAGE_KEY = "committee-queue-finished-cases";
 
 export default function CommitteeQueuePage() {
+  const { user } = useAuth();
   const { role } = useRole();
   const { cycles, cycleId, setCycleId } = useCycleFilter();
   const canSeeQueue = can(role, "viewCommitteeRatings") || can(role, "rateCommitteeCandidate");
-  const canFinish = role === "home_visit_team";
+  const isHomeVisit = role === "home_visit_team";
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   const [queue, setQueue] = useState<CommitteeQueueItem[]>([]);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
@@ -63,13 +66,22 @@ export default function CommitteeQueuePage() {
   const [finishedIds, setFinishedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!canFinish) return;
+    if (!user) return;
+    getMyProfile(user.uid).then((profile) => setMyUserId(profile?.id ?? null));
+  }, [user]);
+
+  useEffect(() => {
+    if (!isHomeVisit) return;
     try {
       setFinishedIds(JSON.parse(localStorage.getItem(FINISHED_STORAGE_KEY) ?? "[]"));
     } catch {
       setFinishedIds([]);
     }
-  }, [canFinish]);
+  }, [isHomeVisit]);
+
+  function isOwnStudent(student: CommitteeQueueItem) {
+    return myUserId != null && student.social_assessments.some((sa) => sa.visitor_id === myUserId);
+  }
 
   function handleFinish(studentId: string) {
     const next = [...finishedIds, studentId];
@@ -78,7 +90,15 @@ export default function CommitteeQueuePage() {
     toast.success("Case marked as finished");
   }
 
-  const visibleQueue = canFinish ? queue.filter((s) => !finishedIds.includes(s.id)) : queue;
+  function handleUnfinish(studentId: string) {
+    const next = finishedIds.filter((id) => id !== studentId);
+    setFinishedIds(next);
+    localStorage.setItem(FINISHED_STORAGE_KEY, JSON.stringify(next));
+    toast.success("Case returned to queue");
+  }
+
+  const activeQueue = isHomeVisit ? queue.filter((s) => !finishedIds.includes(s.id)) : queue;
+  const finishedQueue = isHomeVisit ? queue.filter((s) => finishedIds.includes(s.id)) : [];
 
   const load = useCallback(() => {
     setLoading(true);
@@ -133,15 +153,16 @@ export default function CommitteeQueuePage() {
 
       {canSeeQueue && (
         <div className="space-y-3">
-          <h2 className="text-lg font-medium">Awaiting Decision ({visibleQueue.length})</h2>
-          {visibleQueue.length === 0 ? (
+          <h2 className="text-lg font-medium">Awaiting Decision ({activeQueue.length})</h2>
+          {activeQueue.length === 0 ? (
             <p className="text-sm text-muted-foreground">No students waiting on a committee decision.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {visibleQueue.map((student) => {
+              {activeQueue.map((student) => {
                 const socialAssessment = student.social_assessments[0] ?? null;
                 const photoPath = pickLatestPhotoPath(student.student_documents);
                 const initials = `${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase();
+                const canFinishThis = isHomeVisit && isOwnStudent(student);
 
                 return (
                   <Link key={student.id} href={`/committee/${student.id}`} className="block">
@@ -193,7 +214,7 @@ export default function CommitteeQueuePage() {
                         </p>
                         <p className="font-medium text-foreground">{ratingSummary(student)}</p>
                       </CardContent>
-                      {canFinish && (
+                      {canFinishThis && (
                         <CardContent className="pt-0">
                           <Button
                             size="sm"
@@ -216,6 +237,76 @@ export default function CommitteeQueuePage() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {isHomeVisit && finishedQueue.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-medium text-muted-foreground">Finished Cases ({finishedQueue.length})</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {finishedQueue.map((student) => {
+              const socialAssessment = student.social_assessments[0] ?? null;
+              const photoPath = pickLatestPhotoPath(student.student_documents);
+              const initials = `${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase();
+
+              return (
+                <Link key={student.id} href={`/committee/${student.id}`} className="block opacity-60">
+                  <Card className="h-full transition-colors hover:border-primary">
+                    <CardHeader className="flex flex-row items-start gap-3">
+                      <StudentAvatar
+                        photoPath={photoPath}
+                        signedUrl={photoPath ? photoUrls[photoPath] ?? null : null}
+                        initials={initials}
+                        size="size-10"
+                      />
+                      <div>
+                        <CardTitle className="text-base hover:underline">
+                          {student.first_name} {student.last_name}
+                        </CardTitle>
+                        <CardDescription>
+                          {student.student_code} · {student.provinces?.name_en ?? "No province"} ·{" "}
+                          {student.school_partners?.school_name ?? "No school"}
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {socialAssessment ? (
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs font-medium",
+                              CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
+                            )}
+                          >
+                            {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} · {socialAssessment.final_score}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">No social form</span>
+                        )}
+                        <span>GPA: <span className="text-foreground">{student.gpa ?? "—"}</span></span>
+                      </div>
+                      <p className="font-medium text-foreground">{ratingSummary(student)}</p>
+                    </CardContent>
+                    <CardContent className="pt-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="w-full gap-1.5"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleUnfinish(student.id);
+                        }}
+                      >
+                        <RotateCcw className="size-3.5" />
+                        Undo Finish
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
 

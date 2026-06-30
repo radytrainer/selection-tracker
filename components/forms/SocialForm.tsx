@@ -46,6 +46,7 @@ import {
   INCOME_OPTS,
   LAND_OPTS,
   PARENT_EDUCATION_OPTS,
+  FATHER_OCCUPATION_OPTS,
   PARENT_OCCUPATION_OPTS,
   SCHOOL_ATTENDANCE_OPTS,
   VULNERABILITY_OPTS,
@@ -75,8 +76,8 @@ const STEPS: { title: string; icon: LucideIcon }[] = [
 
 /** Band fields that count toward each step's "answered" progress dot. Free-text notes and the always-defaulted asset ranks aren't required, so they're left out. */
 const STEP_FIELDS: (keyof SocialFormValues)[][] = [
-  ["health_status", "academic_rank"],
-  ["household_size_band", "dependents_band", "parent_occupation_band"],
+  ["gender", "health_status", "academic_rank"],
+  ["household_size_band", "dependents_band", "father_occupation_band", "mother_occupation_band"],
   ["housing_type_band", "house_status_band", "water_access_band", "electricity_access_band"],
   [],
   ["income_band", "expenses_band", "education_support_band"],
@@ -217,6 +218,7 @@ export function SocialForm({
       title: "Health & Academic",
       icon: HeartPulse,
       rows: [
+        { label: "Gender", value: values.gender ? values.gender === "lgbtqia+" ? "LGBTQIA+" : values.gender.charAt(0).toUpperCase() + values.gender.slice(1) : "" },
         { label: "Health", value: labelFor(HEALTH_OPTS, values.health_status) ?? "" },
         { label: "Academic Performance", value: labelFor(ACADEMIC_OPTS, values.academic_rank) ?? "" },
       ].filter((r) => r.value),
@@ -228,7 +230,8 @@ export function SocialForm({
       rows: [
         { label: "Household Size", value: labelFor(HOUSEHOLD_SIZE_OPTS, values.household_size_band) ?? "" },
         { label: "Dependents", value: labelFor(DEPENDENTS_OPTS, values.dependents_band) ?? "" },
-        { label: "Parent Occupation", value: labelFor(PARENT_OCCUPATION_OPTS, values.parent_occupation_band) ?? "" },
+        { label: "Father's Occupation", value: labelFor(FATHER_OCCUPATION_OPTS, values.father_occupation_band) ?? "" },
+        { label: "Mother's Occupation", value: labelFor(PARENT_OCCUPATION_OPTS, values.mother_occupation_band) ?? "" },
         { label: "Father", value: [values.father_age, values.father_job].filter(Boolean).join(" · ") },
         { label: "Mother", value: [values.mother_age, values.mother_job].filter(Boolean).join(" · ") },
       ].filter((r) => r.value),
@@ -371,6 +374,18 @@ export function SocialForm({
         {step === 0 && (
           <div className="space-y-5">
             <div>
+              <SectionHeading icon={Users} title="Gender" />
+              <ChoiceGroup
+                value={form.watch("gender")}
+                onChange={(v) => form.setValue("gender", v as SocialFormValues["gender"])}
+                options={[
+                  { value: "female", label: "Female", points: 0 },
+                  { value: "male", label: "Male", points: 0 },
+                  { value: "lgbtqia+", label: "LGBTQIA+", points: 0 },
+                ]}
+              />
+            </div>
+            <div>
               <SectionHeading icon={HeartPulse} title="Health" />
               <ChoiceGroup
                 layout="grid"
@@ -495,11 +510,20 @@ export function SocialForm({
               />
             </div>
             <div>
-              <SectionHeading icon={Wallet} title="Parent/Guardian Occupation" />
+              <SectionHeading icon={Wallet} title="Father's Occupation" />
               <ChoiceGroup
                 layout="grid"
-                value={form.watch("parent_occupation_band")}
-                onChange={(v) => form.setValue("parent_occupation_band", v)}
+                value={form.watch("father_occupation_band")}
+                onChange={(v) => form.setValue("father_occupation_band", v)}
+                options={FATHER_OCCUPATION_OPTS}
+              />
+            </div>
+            <div>
+              <SectionHeading icon={Wallet} title="Mother's Occupation" />
+              <ChoiceGroup
+                layout="grid"
+                value={form.watch("mother_occupation_band")}
+                onChange={(v) => form.setValue("mother_occupation_band", v)}
                 options={PARENT_OCCUPATION_OPTS}
               />
             </div>

@@ -52,9 +52,11 @@ export const PARENT_OCCUPATION_OPTS = opts(PARENT_OCCUPATION_POINTS, {
   unemployed: "Unemployed",
   daily_laborer: "Daily laborer",
   farmer: "Farmer",
+  mother: "Stay-at-home mother",
   small_business: "Small business",
   stable_salaried: "Stable salaried job",
 });
+export const FATHER_OCCUPATION_OPTS = PARENT_OCCUPATION_OPTS.filter((o) => o.value !== "mother");
 export const HOUSING_TYPE_OPTS = opts(HOUSING_TYPE_POINTS, {
   makeshift: "Makeshift (bamboo, plastic, temporary)",
   wooden_zinc: "Wooden / basic zinc roof",

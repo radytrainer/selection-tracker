@@ -34,7 +34,7 @@ type LookupOption = { id: string; name_en: string };
 const GENDER_LABELS: Record<string, string> = {
   female: "Female",
   male: "Male",
-  other: "Other",
+  "lgbtqia+": "LGBTQIA+",
 };
 
 const STEPS = [
@@ -304,6 +304,7 @@ export function StudentForm({
                     <SelectContent>
                       <SelectItem value="female">Female</SelectItem>
                       <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="lgbtqia+">LGBTQIA+</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -427,6 +428,7 @@ export function StudentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="">None</SelectItem>
                       {schools.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.school_name}
@@ -453,6 +455,7 @@ export function StudentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="">None</SelectItem>
                       {ngos.map((n) => (
                         <SelectItem key={n.id} value={n.id}>
                           {n.organization_name}
@@ -471,7 +474,7 @@ export function StudentForm({
                 <FormItem>
                   <FormLabel>Information Session</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. EDM - Banteaymeanchey" {...field} />
+                    <Input placeholder="e.g. EDM" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -484,7 +487,7 @@ export function StudentForm({
                 <FormItem>
                   <FormLabel>Exam Center</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. EDM Banteaymeanchey 14th AM" {...field} />
+                    <Input placeholder="EDM - Banteaymeanchey" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

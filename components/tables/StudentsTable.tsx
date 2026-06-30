@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  type ColumnDef,
+  type RowSelectionState,
 } from "@tanstack/react-table";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { getStudentColumns } from "@/components/tables/columns/students";
 import {
   Table,
@@ -16,7 +20,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import type { StudentListItem } from "@/services/studentService";
+import { Checkbox } from "@/components/ui/checkbox";
+import { can } from "@/lib/rbac";
+import { bulkSoftDeleteStudents, type StudentListItem } from "@/services/studentService";
 import type { AppRole } from "@/lib/constants";
 
 export function StudentsTable({
@@ -38,20 +44,95 @@ export function StudentsTable({
   role: AppRole | null;
   currentUserId: string | null;
 }) {
-  const columns = useMemo(
-    () => getStudentColumns(onChanged, role, currentUserId),
-    [onChanged, role, currentUserId],
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [deleting, setDeleting] = useState(false);
+
+  const canBulkDelete = can(role, "createEditStudents");
+
+  const selectColumn: ColumnDef<StudentListItem> = useMemo(
+    () => ({
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(v) => row.toggleSelected(!!v)}
+          aria-label="Select row"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      enableSorting: false,
+    }),
+    [],
   );
+
+  const columns = useMemo(() => {
+    const base = getStudentColumns(onChanged, role, currentUserId);
+    return canBulkDelete ? [selectColumn, ...base] : base;
+  }, [onChanged, role, currentUserId, canBulkDelete, selectColumn]);
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    enableRowSelection: canBulkDelete,
+    state: { rowSelection },
+    onRowSelectionChange: setRowSelection,
   });
+
+  const selectedIds = table
+    .getSelectedRowModel()
+    .rows.map((r) => r.original.id);
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return;
+    if (
+      !window.confirm(
+        `Delete ${selectedIds.length} student${selectedIds.length === 1 ? "" : "s"}? This can be restored by an admin later.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await bulkSoftDeleteStudents(selectedIds);
+      toast.success(`${selectedIds.length} student${selectedIds.length === 1 ? "" : "s"} deleted`);
+      setRowSelection({});
+      onChanged();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete students");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
+      {canBulkDelete && selectedIds.length > 0 && (
+        <div className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-4 py-2">
+          <span className="text-sm font-medium text-destructive">
+            {selectedIds.length} student{selectedIds.length === 1 ? "" : "s"} selected
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={deleting}
+            onClick={handleBulkDelete}
+          >
+            <Trash2 className="size-4" />
+            {deleting ? "Deleting..." : `Delete ${selectedIds.length}`}
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -70,7 +151,7 @@ export function StudentsTable({
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

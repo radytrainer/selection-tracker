@@ -3,7 +3,7 @@ import { z } from "zod";
 export const studentFormSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
-  gender: z.enum(["male", "female", "other"]),
+  gender: z.enum(["male", "female", "lgbtqia+"]),
   dob: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
 

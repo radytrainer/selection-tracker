@@ -107,11 +107,11 @@ const HEADER_ALIASES: Record<string, string> = {
   siblings_count: "siblings_count",
 };
 
-function normalizeGender(raw: string): "male" | "female" | "other" | null {
+function normalizeGender(raw: string): "male" | "female" | "lgbtqia+" | null {
   const v = raw.trim().toLowerCase();
   if (v === "male" || v === "m") return "male";
   if (v === "female" || v === "f") return "female";
-  if (v === "other" || v === "o") return "other";
+  if (v === "lgbtqia+" || v === "lgbtqia" || v === "other" || v === "o") return "lgbtqia+";
   return null;
 }
 
@@ -180,7 +180,7 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
       if (!normalized.last_name?.trim()) errors.push("Last name is required");
 
       const gender = normalized.gender ? normalizeGender(normalized.gender) : null;
-      if (!gender) errors.push("Gender must be male, female, or other");
+      if (!gender) errors.push("Gender must be male, female, or lgbtqia+");
       else normalized.gender = gender;
 
       if (normalized.dob) {
@@ -275,7 +275,7 @@ export function StudentImportDialog({ onImported }: { onImported: () => void }) 
             cycle_id: cycle.id,
             first_name: v.first_name,
             last_name: v.last_name,
-            gender: v.gender as "male" | "female" | "other",
+            gender: v.gender as "male" | "female" | "lgbtqia+",
             dob: v.dob || null,
             phone: v.phone || null,
             province_id: v.province_id || null,

@@ -14,8 +14,9 @@ import { useRole } from "@/hooks/useRole";
 import { can } from "@/lib/rbac";
 import type { SocialFormValues } from "@/features/social-form/schema";
 
-function toFormValues(row: SocialAssessment): Partial<SocialFormValues> {
+function toFormValues(row: SocialAssessment, studentGender?: string): Partial<SocialFormValues> {
   return {
+    gender: (studentGender as SocialFormValues["gender"]) ?? undefined,
     health_status: row.health_status ?? undefined,
     ok_to_join_training: row.ok_to_join_training ?? "",
     academic_rank: row.academic_rank ?? undefined,
@@ -28,6 +29,8 @@ function toFormValues(row: SocialAssessment): Partial<SocialFormValues> {
     mother_age: row.mother_age != null ? String(row.mother_age) : "",
     mother_job: row.mother_job ?? "",
     parent_occupation_band: row.parent_occupation_band ?? undefined,
+    father_occupation_band: row.father_occupation_band ?? undefined,
+    mother_occupation_band: row.mother_occupation_band ?? undefined,
     house_owner: row.house_owner ?? "",
     housing_type_band: row.housing_type_band ?? undefined,
     house_status_band: row.house_status_band ?? undefined,
@@ -112,6 +115,7 @@ export default function SocialFormEntryPage() {
         cycleId: student.cycle_id,
         visitNumber: existing?.visit_number ?? 1,
         currentStatus: student.status,
+        gender: values.gender ?? null,
         health_status: values.health_status ?? null,
         ok_to_join_training: values.ok_to_join_training || null,
         academic_rank: values.academic_rank ?? null,
@@ -124,6 +128,8 @@ export default function SocialFormEntryPage() {
         mother_age: values.mother_age ? Number(values.mother_age) : null,
         mother_job: values.mother_job || null,
         parent_occupation_band: values.parent_occupation_band ?? null,
+        father_occupation_band: values.father_occupation_band ?? null,
+        mother_occupation_band: values.mother_occupation_band ?? null,
         house_owner: values.house_owner || null,
         housing_type_band: values.housing_type_band ?? null,
         house_status_band: values.house_status_band ?? null,
@@ -300,7 +306,11 @@ export default function SocialFormEntryPage() {
 
       <SocialForm
         studentId={student.id}
-        defaultValues={existing ? toFormValues(existing) : undefined}
+        defaultValues={
+          existing
+            ? toFormValues(existing, student.gender)
+            : { gender: (student.gender as SocialFormValues["gender"]) ?? undefined }
+        }
         visitorName={user?.displayName || user?.email || ""}
         onSubmit={handleSubmit}
       />

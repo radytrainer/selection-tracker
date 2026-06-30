@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import {
   Building2,
   CalendarDays,
+  ChevronDown,
   GraduationCap,
   Mic,
   type LucideIcon,
@@ -10,7 +12,6 @@ import {
 } from "lucide-react";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -71,25 +72,47 @@ function SectionCardShell({
   onSave: (values: Record<string, number>) => Promise<void>;
   children: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(true);
+
   return (
     <Card className="transition-shadow hover:shadow-md">
-      <CardHeader className="border-b pb-4">
+      <CardHeader className={cn("pb-4", open && "border-b")}>
         <div className="flex items-start gap-3">
-          <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-full", ACCENTS[accent])}>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-full transition-colors hover:opacity-80",
+              ACCENTS[accent],
+            )}
+            aria-expanded={open}
+            aria-label={open ? "Collapse" : "Expand"}
+          >
             <Icon className="size-5" />
-          </div>
-          <div>
+          </button>
+          <div
+            className="flex-1 cursor-pointer"
+            onClick={() => setOpen((v) => !v)}
+          >
             <CardTitle className="text-base">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
+          <div className="flex items-center gap-1">
+            {canEdit && (
+              <StatsEditDialog title={title} groups={groups} values={values} onSave={onSave} />
+            )}
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted"
+              aria-expanded={open}
+            >
+              <ChevronDown className={cn("size-4 transition-transform duration-200", !open && "-rotate-90")} />
+            </button>
+          </div>
         </div>
-        {canEdit && (
-          <CardAction>
-            <StatsEditDialog title={title} groups={groups} values={values} onSave={onSave} />
-          </CardAction>
-        )}
       </CardHeader>
-      <CardContent className="space-y-5 pt-5">{children}</CardContent>
+      {open && <CardContent className="space-y-5 pt-5">{children}</CardContent>}
     </Card>
   );
 }

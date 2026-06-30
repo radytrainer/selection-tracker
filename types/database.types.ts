@@ -283,7 +283,7 @@ export type Database = {
           cycle_id: string;
           first_name: string;
           last_name: string;
-          gender: "male" | "female" | "other";
+          gender: "male" | "female" | "lgbtqia+";
           dob: string | null;
           phone: string | null;
           province_id: string | null;
@@ -329,7 +329,7 @@ export type Database = {
           cycle_id: string;
           first_name: string;
           last_name: string;
-          gender: "male" | "female" | "other";
+          gender: "male" | "female" | "lgbtqia+";
           dob?: string | null;
           phone?: string | null;
           province_id?: string | null;
@@ -562,6 +562,23 @@ export type Database = {
             | "unemployed"
             | "daily_laborer"
             | "farmer"
+            | "mother"
+            | "small_business"
+            | "stable_salaried"
+            | null;
+          father_occupation_band:
+            | "unemployed"
+            | "daily_laborer"
+            | "farmer"
+            | "mother"
+            | "small_business"
+            | "stable_salaried"
+            | null;
+          mother_occupation_band:
+            | "unemployed"
+            | "daily_laborer"
+            | "farmer"
+            | "mother"
             | "small_business"
             | "stable_salaried"
             | null;
@@ -643,6 +660,23 @@ export type Database = {
             | "unemployed"
             | "daily_laborer"
             | "farmer"
+            | "mother"
+            | "small_business"
+            | "stable_salaried"
+            | null;
+          father_occupation_band?:
+            | "unemployed"
+            | "daily_laborer"
+            | "farmer"
+            | "mother"
+            | "small_business"
+            | "stable_salaried"
+            | null;
+          mother_occupation_band?:
+            | "unemployed"
+            | "daily_laborer"
+            | "farmer"
+            | "mother"
             | "small_business"
             | "stable_salaried"
             | null;

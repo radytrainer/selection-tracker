@@ -58,7 +58,7 @@ function exportFinalistsToExcel(selected: StudentListItem[], waitlisted: Student
 }
 
 function emptyGenderCounts() {
-  return { male: 0, female: 0, other: 0 };
+  return { male: 0, female: 0, "lgbtqia+": 0 };
 }
 
 function summarize(data: StudentListItem[]) {
@@ -144,27 +144,43 @@ function FinalistSummary({ data }: { data: StudentListItem[] }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <SplitBar
-            leftLabel="Male"
-            leftValue={summary.gender.male}
-            leftClass="bg-blue-500"
-            rightLabel="Female"
-            rightValue={summary.gender.female}
-            rightClass="bg-rose-400"
-          />
-          {summary.gender.other > 0 && (
-            <p className="text-xs text-muted-foreground">+{summary.gender.other} other</p>
-          )}
-          <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-2 border-t pt-3 text-xs">
+          {(() => {
+            const gTotal = summary.gender.male + summary.gender.female + summary.gender["lgbtqia+"];
+            const malePct = gTotal > 0 ? (summary.gender.male / gTotal) * 100 : 0;
+            const femalePct = gTotal > 0 ? (summary.gender.female / gTotal) * 100 : 0;
+            const lgbtPct = gTotal > 0 ? (summary.gender["lgbtqia+"] / gTotal) * 100 : 0;
+            return (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm flex-wrap gap-x-3 gap-y-1">
+                  <span>Male <span className="font-semibold">{summary.gender.male}</span></span>
+                  <span>Female <span className="font-semibold">{summary.gender.female}</span></span>
+                  <span>LGBTQIA+ <span className="font-semibold">{summary.gender["lgbtqia+"]}</span></span>
+                </div>
+                <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+                  {gTotal > 0 && (
+                    <>
+                      <div className="h-full bg-blue-500" style={{ width: `${malePct}%` }} />
+                      <div className="h-full bg-rose-400" style={{ width: `${femalePct}%` }} />
+                      <div className="h-full bg-purple-500" style={{ width: `${lgbtPct}%` }} />
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 gap-y-2 border-t pt-3 text-xs">
             <span></span>
             <span className="text-right font-medium text-muted-foreground">Male</span>
             <span className="text-right font-medium text-muted-foreground">Female</span>
+            <span className="text-right font-medium text-muted-foreground">LGBT+</span>
             <span className="text-muted-foreground">NGO</span>
             <span className="text-right font-semibold">{summary.genderByNgo.ngo.male}</span>
             <span className="text-right font-semibold">{summary.genderByNgo.ngo.female}</span>
+            <span className="text-right font-semibold">{summary.genderByNgo.ngo["lgbtqia+"]}</span>
             <span className="text-muted-foreground">None NGO</span>
             <span className="text-right font-semibold">{summary.genderByNgo.none.male}</span>
             <span className="text-right font-semibold">{summary.genderByNgo.none.female}</span>
+            <span className="text-right font-semibold">{summary.genderByNgo.none["lgbtqia+"]}</span>
           </div>
         </CardContent>
       </Card>
