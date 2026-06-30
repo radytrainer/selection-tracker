@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Pencil, UserPlus } from "lucide-react";
+import { Pencil, Trash2, UserPlus } from "lucide-react";
 import { UserForm } from "@/components/forms/UserForm";
 import type { CreateUserValues, UpdateUserValues } from "@/features/admin/schema";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -38,6 +40,8 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -67,6 +71,23 @@ export default function AdminUsersPage() {
     toast.success(`${values.fullName} created`);
     setCreateOpen(false);
     load();
+  }
+
+  async function handleDelete() {
+    if (!deletingUser) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${deletingUser.id}`, { method: "DELETE" });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Failed to delete user");
+      toast.success(`${deletingUser.full_name} deleted`);
+      setDeletingUser(null);
+      load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete user");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   async function handleUpdate(values: UpdateUserValues) {
@@ -127,9 +148,19 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell className="capitalize">{u.status}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon-sm" onClick={() => setEditingUser(u)}>
-                      <Pencil className="size-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon-sm" onClick={() => setEditingUser(u)}>
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setDeletingUser(u)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -144,6 +175,25 @@ export default function AdminUsersPage() {
             <DialogTitle>Create User</DialogTitle>
           </DialogHeader>
           <UserForm onSubmit={handleCreate} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deletingUser !== null} onOpenChange={(open) => !open && setDeletingUser(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <span className="font-medium">{deletingUser?.full_name}</span> ({deletingUser?.email})? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingUser(null)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

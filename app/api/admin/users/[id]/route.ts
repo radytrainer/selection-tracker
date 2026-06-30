@@ -79,3 +79,33 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const caller = await requireSuperAdmin(req);
+  if (!caller) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { id } = await params;
+  const supabase = createAdminClient();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("users")
+    .select("firebase_uid")
+    .eq("id", id)
+    .single();
+  if (existingError) return NextResponse.json({ error: existingError.message }, { status: 404 });
+
+  const auth = getFirebaseAdminAuth();
+  try {
+    await auth.deleteUser(existing.firebase_uid);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete Firebase user" },
+      { status: 400 },
+    );
+  }
+
+  const { error: deleteError } = await supabase.from("users").delete().eq("id", id);
+  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+
+  return NextResponse.json({ ok: true });
+}
