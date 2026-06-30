@@ -20,6 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const GRADE_LABELS: Record<string, string> = {
@@ -34,10 +35,8 @@ const GRADE_COLORS: Record<string, string> = {
   not_recommended: "text-red-700 bg-red-50 border-red-200",
 };
 
-type Category = {
-  label: string;
-  questions: { key: ScoreKey; text: string }[];
-};
+type Question = { key: ScoreKey; km: string; en: string };
+type Category = { label: string; questions: Question[] };
 
 const CATEGORIES: Category[] = [
   {
@@ -45,27 +44,33 @@ const CATEGORIES: Category[] = [
     questions: [
       {
         key: "q1_score",
-        text: "I like breaking complex problems into smaller, easy-to-solve pieces.",
+        km: "ខ្ញុំចូលចិត្តបំបែកបញ្ហាស្មុគស្មាញ ឱ្យទៅជាផ្នែកតូចៗ ដែលងាយស្រួលដោះស្រាយ។",
+        en: "I like breaking complex problems into smaller, easy-to-solve pieces.",
       },
       {
         key: "q2_score",
-        text: 'When encountering bugs or technical issues, my first instinct is to understand the root cause rather than just fix it quickly.',
+        km: 'នៅពេលជួបបញ្ហាបច្ចេកទេស ឬ "Bug" ការគិតដំបូងរបស់ខ្ញុំគឺចង់ដឹងពីមូលហេតុ ដែលវាកើតឡើង ជាជាងត្រាន់តែចង់ជួសជុលវាឱ្យរួចពីម្ដ។',
+        en: 'When encountering bugs or technical issues, my first instinct is to understand the root cause rather than just fix it quickly.',
       },
       {
         key: "q3_score",
-        text: "How important is it to create new things that are unique, smart, and attractive?",
+        km: "តើអ្នកគិតថាមានសារសំខាន់បុណ្ណាក្នុងការបង្កើតអ្វីថ្មីៗ ដែលមានលក្ខណៈប្លែក ស្មាត និងទាក់ទាញ?",
+        en: "How important is it to create new things that are unique, smart, and attractive?",
       },
       {
         key: "q4_score",
-        text: "I want a career in the technology field.",
+        km: "ខ្ញុំចង់មានអាជីព/ការងារមួយនៅក្នុងវិស័យបច្ចេកវិទ្យា។",
+        en: "I want a career in the technology field.",
       },
       {
         key: "q5_score",
-        text: 'I agree there are often multiple ways to solve a problem, not just one "correct" way.',
+        km: 'ខ្ញុំយល់ស្របនឹងគំនិតដែលថា ជាញឹកញាប់មានវិធីដោះស្រាយ ជៀសជាង "ត្រឹមត្រូវ" ជាងមួយ ដើម្បីដោះស្រាយបញ្ហាអ្វីមួយ។',
+        en: 'I agree there are often multiple ways to solve a problem, not just one "correct" way.',
       },
       {
         key: "q6_score",
-        text: "I like learning to use new tools and software to develop myself.",
+        km: "ខ្ញុំចូលចិត្តរៀនប្រើប្រាស់ឧបករណ៍ និងកម្មវិធីថ្មីៗ ដើម្បីអភិវឌ្ឍន៍ខ្លួន។",
+        en: "I like learning to use new tools and software to develop myself.",
       },
     ],
   },
@@ -74,19 +79,23 @@ const CATEGORIES: Category[] = [
     questions: [
       {
         key: "q7_score",
-        text: "How important is understanding and applying approaches to solve complex problems?",
+        km: "តើអ្នកគិតថាមានសារសំខាន់បុណ្ណាក្នុងការយល់ និងអនុវត្តតាមបញ្ហាតិច ឬការណែនំ រៀបបំបែកបញ្ហាស្មុគស្មាញ?",
+        en: "How important is understanding and applying approaches to solve complex problems?",
       },
       {
         key: "q8_score",
-        text: "How important is using new ideas and creative thinking for new things?",
+        km: "តើអ្នកគិតថាមានសារសំខាន់បុណ្ណាក្នុងការប្រើគំនិតថ្មី និងការប្រឌិតអំពីដំណើរការអ្វីថ្មីៗ?",
+        en: "How important is using new ideas and creative thinking for new things?",
       },
       {
         key: "q9_score",
-        text: "I like explaining technical concepts to others or helping them solve problems with their devices.",
+        km: "ខ្ញុំចូលចិត្តពន្យល់ពីបញ្ហាបច្ចេកទេសដល់អ្នកដ៏ទៃ ឬជួយដោះស្រាយបញ្ហាឧបករណ៍ប្រើប្រាស់របស់ពួកគេ។",
+        en: "I like explaining technical concepts to others or helping them solve problems with their devices.",
       },
       {
         key: "q10_score",
-        text: "The program lasts 2 years and is quite complex. If problems arise or your family needs you, will you continue your studies?",
+        km: "កម្មវិធីសិក្សាមានរយៈពេល ២ ឆ្នាំ ហើយមានស្មុគស្មាញណាស់។ ពេលមានបញ្ហា ឬ គ្រួសាររបស់អ្នកត្រូវការអ្នក តើអ្នកនឹងបន្តដើរតាមការសិក្សារបស់អ្នកឬទេ?",
+        en: "The program lasts 2 years and is quite complex. If problems arise or your family needs you, will you continue your studies?",
       },
     ],
   },
@@ -95,27 +104,33 @@ const CATEGORIES: Category[] = [
     questions: [
       {
         key: "q11_score",
-        text: "How important is understanding and empathizing with the problems of others?",
+        km: "តើអ្នកគិតថាមានសារសំខាន់បុណ្ណាក្នុងការយកយល់ និងយល់ចិត្តចំពោះបញ្ហារបស់អ្នកដ៏ទៃ?",
+        en: "How important is understanding and empathizing with the problems of others?",
       },
       {
         key: "q12_score",
-        text: 'When receiving bad grades or failing a project, I tend to refocus on learning ("recover") rather than complaining about the failure.',
+        km: 'នៅពេលទទួលបានពិន្ទុមិនល្អ ឬគម្រោងត្រូវបានបរាជ័យ ខ្ញុំមានទំនោររៀនឡើងវិញ "សង្គ្រោះបច្ចុប្បន្ន" ជាជាងការរអ៊ូទាំពីការបរាជ័យ។',
+        en: 'When receiving bad grades or failing a project, I tend to refocus on learning ("recover") rather than complaining about the failure.',
       },
       {
         key: "q13_score",
-        text: "I believe skill comes from effort and practice, not innate talent.",
+        km: "ខ្ញុំជឿថាការរៀនពូកែ ផ្អែកលើជំនាញ ដែលខ្ញុំអាចបង្ហាញតាមរយៈការខិតខំប្រឹងប្រែង មិនមែនជាទេពកោសល្យពីកំណើតនោះទេ។",
+        en: "I believe skill comes from effort and practice, not innate talent.",
       },
       {
         key: "q14_score",
-        text: "I use effective body language to strengthen my communication.",
+        km: "ខ្ញុំប្រើភាសាកាយវិការដ៏មានប្រសិទ្ធភាព ដើម្បីពង្រឹងការទំនាក់ទំនងរបស់ខ្ញុំ។",
+        en: "I use effective body language to strengthen my communication.",
       },
       {
         key: "q15_score",
-        text: "I communicate comfortably with respect and manage conversations professionally.",
+        km: "ខ្ញុំប្រាស្រ័យទាក់ទងដោយភាពស្រួលចិត្ត ជាមួយការគោរព និងគ្រប់គ្រងការសន្ទនាដោយវិជ្ជាជីវៈ។",
+        en: "I communicate comfortably with respect and manage conversations professionally.",
       },
       {
         key: "q16_score",
-        text: "I enjoy community life and feel responsible for the wellbeing of others.",
+        km: "ខ្ញុំរីករាយជាមួយជីវិតសហគមន៍ និងមានការទទួលខុសត្រូវចំពោះសុខុមាលភាពរបស់អ្នកដទៃ?",
+        en: "I enjoy community life and feel responsible for the wellbeing of others.",
       },
     ],
   },
@@ -173,6 +188,8 @@ function ScoreSummary({ values }: { values: InterviewFormValues }) {
   );
 }
 
+let questionCounter = 0;
+
 export function InterviewForm({
   defaultValues,
   onSubmit,
@@ -181,26 +198,15 @@ export function InterviewForm({
   onSubmit: (values: InterviewFormValues) => Promise<void>;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const form = useForm<InterviewFormValues>({
     resolver: zodResolver(interviewFormSchema),
     defaultValues: {
-      q1_score: 0,
-      q2_score: 0,
-      q3_score: 0,
-      q4_score: 0,
-      q5_score: 0,
-      q6_score: 0,
-      q7_score: 0,
-      q8_score: 0,
-      q9_score: 0,
-      q10_score: 0,
-      q11_score: 0,
-      q12_score: 0,
-      q13_score: 0,
-      q14_score: 0,
-      q15_score: 0,
-      q16_score: 0,
+      q1_score: 0, q2_score: 0, q3_score: 0, q4_score: 0,
+      q5_score: 0, q6_score: 0, q7_score: 0, q8_score: 0,
+      q9_score: 0, q10_score: 0, q11_score: 0, q12_score: 0,
+      q13_score: 0, q14_score: 0, q15_score: 0, q16_score: 0,
       comments: "",
       ...defaultValues,
     },
@@ -217,51 +223,76 @@ export function InterviewForm({
     }
   }
 
+  let qIndex = 0;
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {CATEGORIES.map((category) => (
-          <div key={category.label} className="space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              {category.label}
-            </h3>
-            <div className="rounded-lg border divide-y">
-              {category.questions.map((q, idx) => (
-                <FormField
-                  key={q.key}
-                  control={form.control}
-                  name={q.key}
-                  render={({ field }) => (
-                    <FormItem className="flex items-start justify-between gap-3 px-3 py-2.5">
-                      <div className="flex gap-2 text-sm leading-snug">
-                        <span className="text-muted-foreground shrink-0">
-                          {CATEGORIES.slice(0, CATEGORIES.indexOf(category)).reduce(
-                            (acc, c) => acc + c.questions.length,
-                            0
-                          ) +
-                            idx +
-                            1}
-                          .
-                        </span>
-                        <span>{q.text}</span>
-                      </div>
-                      <div className="flex flex-col items-end gap-0.5 shrink-0">
-                        <FormControl>
-                          <StarRating
-                            size="sm"
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </div>
-                    </FormItem>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {CATEGORIES.map((category) => {
+          const isCollapsed = collapsed[category.label] ?? false;
+          const startIndex = qIndex;
+          qIndex += category.questions.length;
+
+          return (
+            <div key={category.label} className="rounded-lg border overflow-hidden">
+              {/* Category header — clickable to collapse */}
+              <button
+                type="button"
+                onClick={() =>
+                  setCollapsed((prev) => ({ ...prev, [category.label]: !isCollapsed }))
+                }
+                className="w-full flex items-center justify-between px-4 py-3 bg-muted/40 hover:bg-muted/70 transition-colors text-left"
+              >
+                <span className="text-sm font-semibold">{category.label}</span>
+                <ChevronDown
+                  className={cn(
+                    "size-4 text-muted-foreground transition-transform duration-200",
+                    isCollapsed && "-rotate-90",
                   )}
                 />
-              ))}
+              </button>
+
+              {/* Questions — hidden when collapsed */}
+              {!isCollapsed && (
+                <div className="divide-y">
+                  {category.questions.map((q, idx) => {
+                    const number = startIndex + idx + 1;
+                    return (
+                      <FormField
+                        key={q.key}
+                        control={form.control}
+                        name={q.key}
+                        render={({ field }) => (
+                          <FormItem className="flex items-start justify-between gap-3 px-4 py-3">
+                            <div className="flex gap-2 min-w-0">
+                              <span className="text-muted-foreground text-sm shrink-0 pt-0.5">
+                                {number}.
+                              </span>
+                              <div className="space-y-0.5 min-w-0">
+                                <p className="text-sm leading-snug">{q.km}</p>
+                                <p className="text-xs text-muted-foreground leading-snug">{q.en}</p>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-0.5 shrink-0">
+                              <FormControl>
+                                <StarRating
+                                  size="sm"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <ScoreSummary values={watched as InterviewFormValues} />
 
