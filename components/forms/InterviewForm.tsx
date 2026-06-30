@@ -41,7 +41,7 @@ type Category = {
 
 const CATEGORIES: Category[] = [
   {
-    label: "Motivation in TI",
+    label: "Motivation in IT",
     questions: [
       {
         key: "q1_score",

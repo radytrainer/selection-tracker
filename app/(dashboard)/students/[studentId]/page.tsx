@@ -379,7 +379,7 @@ export default function StudentDetailPage() {
                   <>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                       <StatCard icon={Mic} label="Total Score" value={`${total} / 80`} />
-                      <StatCard icon={GraduationCap} label="Motivation in TI" value={`${motivationTotal} / 30`} />
+                      <StatCard icon={GraduationCap} label="Motivation in IT" value={`${motivationTotal} / 30`} />
                       <StatCard icon={HeartHandshake} label="Study Resilience" value={`${resilienceTotal} / 20`} />
                       <StatCard icon={UsersRound} label="Group Work" value={`${collaborationTotal} / 30`} />
                     </div>
