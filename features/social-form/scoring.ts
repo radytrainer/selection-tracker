@@ -115,6 +115,13 @@ function categoryFor(finalScore: number): SocialFormCategory {
   return "relatively_well_off";
 }
 
+/** Above this, the household is judged too well-off to qualify — the visit is flagged as failed rather than scored into a poverty band. */
+export const FAILED_HOME_VISIT_THRESHOLD = 60;
+
+export function isFailedHomeVisit(finalScore: number): boolean {
+  return finalScore > FAILED_HOME_VISIT_THRESHOLD;
+}
+
 export function computeSocialFormScore(input: SocialFormScoreInput) {
   const parentEducationAvg = Math.round(
     (points(PARENT_EDUCATION_POINTS, input.father_education_band) +

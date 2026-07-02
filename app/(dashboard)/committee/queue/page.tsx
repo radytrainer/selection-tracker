@@ -27,7 +27,12 @@ import { useCycleFilter } from "@/hooks/useCycleFilter";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { can } from "@/lib/rbac";
-import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import {
+  CATEGORY_BADGE_CLASSES,
+  CATEGORY_LABELS,
+  isFailedHomeVisit,
+  type SocialFormCategory,
+} from "@/features/social-form/scoring";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { getSignedStudentDocumentUrls, pickLatestPhotoPath } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
@@ -190,10 +195,15 @@ export default function CommitteeQueuePage() {
                             <span
                               className={cn(
                                 "rounded-full px-2 py-0.5 text-xs font-medium",
-                                CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
+                                isFailedHomeVisit(socialAssessment.final_score)
+                                  ? "bg-red-100 text-red-700"
+                                  : CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
                               )}
                             >
-                              {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} · {socialAssessment.final_score}
+                              {isFailedHomeVisit(socialAssessment.final_score)
+                                ? "Failed Home Visit"
+                                : CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}{" "}
+                              · {socialAssessment.final_score}
                             </span>
                           ) : (
                             <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">No social form</span>
@@ -275,10 +285,15 @@ export default function CommitteeQueuePage() {
                           <span
                             className={cn(
                               "rounded-full px-2 py-0.5 text-xs font-medium",
-                              CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
+                              isFailedHomeVisit(socialAssessment.final_score)
+                                ? "bg-red-100 text-red-700"
+                                : CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
                             )}
                           >
-                            {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]} · {socialAssessment.final_score}
+                            {isFailedHomeVisit(socialAssessment.final_score)
+                              ? "Failed Home Visit"
+                              : CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}{" "}
+                            · {socialAssessment.final_score}
                           </span>
                         ) : (
                           <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">No social form</span>

@@ -22,7 +22,7 @@ import {
 import { getStudent, type StudentDetail } from "@/services/studentService";
 import { sendToCommittee } from "@/services/committeeService";
 import { getMyProfile } from "@/services/userService";
-import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS } from "@/features/social-form/scoring";
+import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, isFailedHomeVisit } from "@/features/social-form/scoring";
 import { STUDENT_STATUSES, STUDENT_STATUS_BADGE_CLASSES } from "@/lib/constants";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { pickLatestPhotoPath } from "@/lib/supabase/storage";
@@ -313,10 +313,14 @@ export default function StudentDetailPage() {
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      CATEGORY_BADGE_CLASSES[latestAssessment.category],
+                      isFailedHomeVisit(latestAssessment.final_score)
+                        ? "bg-red-100 text-red-700"
+                        : CATEGORY_BADGE_CLASSES[latestAssessment.category],
                     )}
                   >
-                    {CATEGORY_LABELS[latestAssessment.category]}
+                    {isFailedHomeVisit(latestAssessment.final_score)
+                      ? "Failed Home Visit"
+                      : CATEGORY_LABELS[latestAssessment.category]}
                   </span>
                 </div>
                 <Field label="Final Score" value={String(latestAssessment.final_score)} />
@@ -426,10 +430,12 @@ export default function StudentDetailPage() {
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      CATEGORY_BADGE_CLASSES[assessment.category],
+                      isFailedHomeVisit(assessment.final_score)
+                        ? "bg-red-100 text-red-700"
+                        : CATEGORY_BADGE_CLASSES[assessment.category],
                     )}
                   >
-                    {CATEGORY_LABELS[assessment.category]}
+                    {isFailedHomeVisit(assessment.final_score) ? "Failed Home Visit" : CATEGORY_LABELS[assessment.category]}
                   </span>
                 </div>
                 <Field label="Final Score" value={String(assessment.final_score)} />

@@ -24,6 +24,8 @@ import {
   CATEGORY_LABELS,
   computeSocialFormScore,
   computeVacScore,
+  FAILED_HOME_VISIT_THRESHOLD,
+  isFailedHomeVisit,
   VAC_CATEGORIES,
   VAC_TIER_BADGE_CLASSES,
   VAC_TIER_LABELS,
@@ -191,6 +193,7 @@ export function SocialForm({
 
   const score = useMemo(() => computeSocialFormScore(values), [values]);
   const vacScore = useMemo(() => computeVacScore(values), [values]);
+  const failedHomeVisit = isFailedHomeVisit(score.finalScore);
 
   const stepProgress = useMemo(
     () =>
@@ -343,8 +346,13 @@ export function SocialForm({
               <CurrentIcon className="size-4 text-primary" />
               <span className="text-sm font-medium">{STEPS[step].title}</span>
             </div>
-            <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", CATEGORY_BADGE_CLASSES[score.category])}>
-              {score.finalScore} pts · {CATEGORY_LABELS[score.category]}
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-medium",
+                failedHomeVisit ? "bg-red-100 text-red-700" : CATEGORY_BADGE_CLASSES[score.category],
+              )}
+            >
+              {score.finalScore} pts · {failedHomeVisit ? "Failed Home Visit" : CATEGORY_LABELS[score.category]}
             </span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-muted">
@@ -951,13 +959,26 @@ export function SocialForm({
 
         {step === 10 && (
           <div className="space-y-5">
-            <div className={cn("rounded-xl border-2 p-4", CATEGORY_BADGE_CLASSES[score.category], "border-current/20")}>
+            <div
+              className={cn(
+                "rounded-xl border-2 p-4",
+                failedHomeVisit ? "bg-red-100 text-red-700" : CATEGORY_BADGE_CLASSES[score.category],
+                "border-current/20",
+              )}
+            >
               <p className="text-xs font-medium uppercase tracking-wide opacity-70">Final Assessment</p>
-              <p className="mt-1 text-2xl font-semibold">{CATEGORY_LABELS[score.category]}</p>
+              <p className="mt-1 text-2xl font-semibold">
+                {failedHomeVisit ? "Failed Home Visit" : CATEGORY_LABELS[score.category]}
+              </p>
               <p className="mt-1 text-sm opacity-80">
                 {score.totalScore} pts total − {score.vulnerabilityDeduction} vulnerability ={" "}
                 <span className="font-medium">{score.finalScore} pts</span>
               </p>
+              {failedHomeVisit && (
+                <p className="mt-1 text-sm opacity-80">
+                  Score exceeds {FAILED_HOME_VISIT_THRESHOLD} pts — household appears too well-off to qualify.
+                </p>
+              )}
             </div>
 
             <div className={cn("rounded-xl border-2 p-4", VAC_TIER_BADGE_CLASSES[vacScore.tier], "border-current/20")}>

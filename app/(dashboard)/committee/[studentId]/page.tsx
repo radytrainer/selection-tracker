@@ -40,7 +40,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CommitteeRatingPanel } from "@/components/committee/CommitteeRatingPanel";
 import { RatingAverageChart } from "@/components/committee/RatingAverageChart";
 import { SocialFormSummary } from "@/components/committee/SocialFormSummary";
-import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, type SocialFormCategory } from "@/features/social-form/scoring";
+import {
+  CATEGORY_BADGE_CLASSES,
+  CATEGORY_LABELS,
+  isFailedHomeVisit,
+  type SocialFormCategory,
+} from "@/features/social-form/scoring";
 import { HEALTH_OPTS, labelFor } from "@/features/social-form/labels";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { pickLatestPhotoPath } from "@/lib/supabase/storage";
@@ -167,10 +172,15 @@ export default function CommitteeDossierPage() {
                 <span
                   className={cn(
                     "rounded-full px-3 py-1 text-sm font-bold",
-                    CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
+                    isFailedHomeVisit(socialAssessment.final_score)
+                      ? "bg-red-100 text-red-700"
+                      : CATEGORY_BADGE_CLASSES[socialAssessment.category as SocialFormCategory],
                   )}
                 >
-                  {socialAssessment.final_score} pts · {CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}
+                  {socialAssessment.final_score} pts ·{" "}
+                  {isFailedHomeVisit(socialAssessment.final_score)
+                    ? "Failed Home Visit"
+                    : CATEGORY_LABELS[socialAssessment.category as SocialFormCategory]}
                 </span>
               )}
             </div>

@@ -13,6 +13,7 @@ import {
 import {
   CATEGORY_BADGE_CLASSES,
   CATEGORY_LABELS,
+  isFailedHomeVisit,
   VAC_CATEGORIES,
   VAC_TIER_BADGE_CLASSES,
   VAC_TIER_LABELS,
@@ -134,6 +135,7 @@ function buildSections(a: SocialAssessmentRow) {
 export function SocialFormSummary({ assessment }: { assessment: SocialAssessmentRow }) {
   const sections = buildSections(assessment);
   const category = assessment.category as SocialFormCategory;
+  const failedHomeVisit = isFailedHomeVisit(assessment.final_score ?? 0);
   const vacRows = VAC_CATEGORIES.map((c) => ({
     label: c.label,
     value: c.options.find((o) => o.value === assessment[c.field])?.label ?? "",
@@ -148,8 +150,13 @@ export function SocialFormSummary({ assessment }: { assessment: SocialAssessment
           <span className="text-muted-foreground"> · {assessment.visit_date}</span>
           {assessment.visitor_name && <span className="text-muted-foreground"> · by {assessment.visitor_name}</span>}
         </div>
-        <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", CATEGORY_BADGE_CLASSES[category])}>
-          {assessment.final_score} pts · {CATEGORY_LABELS[category]}
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-1 text-xs font-medium",
+            failedHomeVisit ? "bg-red-100 text-red-700" : CATEGORY_BADGE_CLASSES[category],
+          )}
+        >
+          {assessment.final_score} pts · {failedHomeVisit ? "Failed Home Visit" : CATEGORY_LABELS[category]}
         </span>
       </div>
 
