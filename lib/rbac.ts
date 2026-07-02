@@ -7,6 +7,7 @@ import type { AppRole } from "@/lib/constants";
  */
 export const CAPABILITIES = {
   manageUsers: ["super_admin"],
+  manageInterviewQuestions: ["super_admin"],
   manageCycles: ["super_admin", "program_manager"],
   managePartners: ["super_admin", "program_manager"],
   createEditStudents: ["super_admin", "program_manager", "selection_team"],

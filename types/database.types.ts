@@ -487,6 +487,72 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["interviews"]["Insert"]>;
         Relationships: [];
       };
+      interview_categories: {
+        Row: {
+          id: string;
+          name: string;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_categories"]["Insert"]>;
+        Relationships: [];
+      };
+      interview_questions: {
+        Row: {
+          id: string;
+          category_id: string;
+          text_en: string;
+          text_km: string | null;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          category_id: string;
+          text_en: string;
+          text_km?: string | null;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_questions"]["Insert"]>;
+        Relationships: [];
+      };
+      interview_answers: {
+        Row: {
+          id: string;
+          interview_id: string;
+          question_id: string;
+          score: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          interview_id: string;
+          question_id: string;
+          score: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_answers"]["Insert"]>;
+        Relationships: [];
+      };
       home_visits: {
         Row: {
           id: string;

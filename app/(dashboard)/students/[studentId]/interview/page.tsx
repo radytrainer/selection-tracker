@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getStudent, type StudentDetail } from "@/services/studentService";
-import { saveInterview } from "@/services/interviewService";
+import { saveInterview, getInterviewAnswers } from "@/services/interviewService";
+import { listInterviewCategories, type InterviewCategoryWithQuestions } from "@/services/interviewQuestionService";
 import { InterviewForm } from "@/components/forms/InterviewForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { InterviewFormValues } from "@/features/interview/schema";
@@ -13,11 +14,19 @@ export default function InterviewEntryPage() {
   const params = useParams<{ studentId: string }>();
   const router = useRouter();
   const [student, setStudent] = useState<StudentDetail | null>(null);
+  const [categories, setCategories] = useState<InterviewCategoryWithQuestions[]>([]);
+  const [existingAnswers, setExistingAnswers] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getStudent(params.studentId)
-      .then(setStudent)
+    Promise.all([getStudent(params.studentId), listInterviewCategories()])
+      .then(async ([s, cats]) => {
+        setStudent(s);
+        setCategories(cats);
+        if (s.interviews) {
+          setExistingAnswers(await getInterviewAnswers(s.interviews.id));
+        }
+      })
       .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load student"))
       .finally(() => setLoading(false));
   }, [params.studentId]);
@@ -30,6 +39,7 @@ export default function InterviewEntryPage() {
         cycleId: student.cycle_id,
         currentStatus: student.status,
         formValues: values,
+        questionIds: categories.flatMap((c) => c.questions.map((q) => q.id)),
       });
       toast.success("Interview saved");
       router.push(`/students/${student.id}`);
@@ -51,28 +61,10 @@ export default function InterviewEntryPage() {
     return <p className="text-sm text-muted-foreground">Student not found.</p>;
   }
 
-  const iv = student.interviews;
-  const defaultValues: Partial<InterviewFormValues> | undefined = iv
-    ? {
-        q1_score: iv.q1_score ?? 0,
-        q2_score: iv.q2_score ?? 0,
-        q3_score: iv.q3_score ?? 0,
-        q4_score: iv.q4_score ?? 0,
-        q5_score: iv.q5_score ?? 0,
-        q6_score: iv.q6_score ?? 0,
-        q7_score: iv.q7_score ?? 0,
-        q8_score: iv.q8_score ?? 0,
-        q9_score: iv.q9_score ?? 0,
-        q10_score: iv.q10_score ?? 0,
-        q11_score: iv.q11_score ?? 0,
-        q12_score: iv.q12_score ?? 0,
-        q13_score: iv.q13_score ?? 0,
-        q14_score: iv.q14_score ?? 0,
-        q15_score: iv.q15_score ?? 0,
-        q16_score: iv.q16_score ?? 0,
-        comments: iv.comments ?? "",
-      }
-    : undefined;
+  const defaultValues: Partial<InterviewFormValues> = {
+    answers: existingAnswers,
+    comments: student.interviews?.comments ?? "",
+  };
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -82,7 +74,7 @@ export default function InterviewEntryPage() {
         </h1>
         <p className="text-sm text-muted-foreground">{student.student_code}</p>
       </div>
-      <InterviewForm defaultValues={defaultValues} onSubmit={handleSubmit} />
+      <InterviewForm categories={categories} defaultValues={defaultValues} onSubmit={handleSubmit} />
     </div>
   );
 }

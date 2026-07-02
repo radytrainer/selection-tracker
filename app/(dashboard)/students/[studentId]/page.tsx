@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getStudent, type StudentDetail } from "@/services/studentService";
+import { getInterviewSummary, type InterviewSummary } from "@/services/interviewService";
 import { sendToCommittee } from "@/services/committeeService";
 import { getMyProfile } from "@/services/userService";
 import { CATEGORY_BADGE_CLASSES, CATEGORY_LABELS, isFailedHomeVisit } from "@/features/social-form/scoring";
@@ -48,6 +49,9 @@ const RECOMMENDATION_LABELS: Record<string, string> = {
   A2: "A2",
   not_recommended: "Not Recommended",
 };
+
+/** Interview categories are admin-managed now (no longer a fixed 3), so icons rotate through this list rather than being tied to specific category names. */
+const CATEGORY_ICONS: LucideIcon[] = [GraduationCap, HeartHandshake, UsersRound, Award];
 
 const PIPELINE_STAGES: { status: string; label: string }[] = [
   { status: "registered", label: "Registered" },
@@ -161,6 +165,7 @@ export default function StudentDetailPage() {
   const { role } = useRole();
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [student, setStudent] = useState<StudentDetail | null>(null);
+  const [interviewSummary, setInterviewSummary] = useState<InterviewSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [sendingToCommittee, setSendingToCommittee] = useState(false);
 
@@ -174,6 +179,12 @@ export default function StudentDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    getInterviewSummary(params.studentId)
+      .then(setInterviewSummary)
+      .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load interview summary"));
+  }, [params.studentId]);
 
   useEffect(() => {
     if (!user) return;
@@ -366,42 +377,36 @@ export default function StudentDetailPage() {
         </TabsContent>
 
         <TabsContent value="interview" className="mt-4 space-y-4">
-          {student.interviews ? (
+          {interviewSummary ? (
             <>
-              {(() => {
-                const iv = student.interviews;
-                const motivationTotal =
-                  (iv.q1_score ?? 0) + (iv.q2_score ?? 0) + (iv.q3_score ?? 0) +
-                  (iv.q4_score ?? 0) + (iv.q5_score ?? 0) + (iv.q6_score ?? 0);
-                const resilienceTotal =
-                  (iv.q7_score ?? 0) + (iv.q8_score ?? 0) + (iv.q9_score ?? 0) + (iv.q10_score ?? 0);
-                const collaborationTotal =
-                  (iv.q11_score ?? 0) + (iv.q12_score ?? 0) + (iv.q13_score ?? 0) +
-                  (iv.q14_score ?? 0) + (iv.q15_score ?? 0) + (iv.q16_score ?? 0);
-                const total = motivationTotal + resilienceTotal + collaborationTotal;
-                return (
-                  <>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                      <StatCard icon={Mic} label="Total Score" value={`${total} / 80`} />
-                      <StatCard icon={GraduationCap} label="Motivation in IT" value={`${motivationTotal} / 30`} />
-                      <StatCard icon={HeartHandshake} label="Study Resilience" value={`${resilienceTotal} / 20`} />
-                      <StatCard icon={UsersRound} label="Group Work" value={`${collaborationTotal} / 30`} />
-                    </div>
-                    <SectionCard icon={Mic} title="Grade" description="Computed from self-assessment total">
-                      <Field
-                        label="Grade"
-                        value={iv.recommendation ? RECOMMENDATION_LABELS[iv.recommendation] : "—"}
-                      />
-                      {iv.comments && (
-                        <div className="py-1.5 text-sm">
-                          <p className="text-muted-foreground">Comments</p>
-                          <p className="mt-1">{iv.comments}</p>
-                        </div>
-                      )}
-                    </SectionCard>
-                  </>
-                );
-              })()}
+              {interviewSummary.recommendation && interviewSummary.recommendation !== "not_recommended" && (
+                <div className="rounded-lg border px-4 py-3 text-sm font-semibold text-center text-green-700 bg-green-50 border-green-200">
+                  Passed Interview
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatCard icon={Mic} label="Total Score" value={`${interviewSummary.total} / ${interviewSummary.maxScore}`} />
+                {interviewSummary.categoryTotals.map(({ label, total, max }, idx) => (
+                  <StatCard
+                    key={label}
+                    icon={CATEGORY_ICONS[idx % CATEGORY_ICONS.length]}
+                    label={label}
+                    value={`${total} / ${max}`}
+                  />
+                ))}
+              </div>
+              <SectionCard icon={Mic} title="Grade" description="Computed from self-assessment total">
+                <Field
+                  label="Grade"
+                  value={interviewSummary.recommendation ? RECOMMENDATION_LABELS[interviewSummary.recommendation] : "—"}
+                />
+                {interviewSummary.comments && (
+                  <div className="py-1.5 text-sm">
+                    <p className="text-muted-foreground">Comments</p>
+                    <p className="mt-1">{interviewSummary.comments}</p>
+                  </div>
+                )}
+              </SectionCard>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">No interview recorded yet.</p>

@@ -13,6 +13,7 @@ import {
   Gavel,
   LayoutDashboard,
   Map as MapIcon,
+  MessageCircleQuestionMark,
   School,
   ShieldCheck,
   type LucideIcon,
@@ -100,6 +101,12 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   { href: "/admin/users", label: "Users", icon: ShieldCheck, roles: ["super_admin"] },
+  {
+    href: "/admin/interview-questions",
+    label: "Interview Questions",
+    icon: MessageCircleQuestionMark,
+    roles: ["super_admin"],
+  },
 ];
 
 const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
