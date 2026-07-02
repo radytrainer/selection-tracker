@@ -616,6 +616,7 @@ export type Database = {
           school_attendance_band: "none" | "some_irregular" | "most_attend" | "all_attend" | null;
           debt_band: "no_debt" | "small_manageable" | "high_burden" | "very_high_risk" | null;
           debt_amount: string | null;
+          debt_note: string | null;
           farm_land_band: "landless" | "small" | "medium" | "large" | null;
           farm_income_band: "none" | "minimal" | "moderate" | "major" | null;
           plantation_land_band: "landless" | "small" | "medium" | "large" | null;
@@ -714,6 +715,7 @@ export type Database = {
           school_attendance_band?: "none" | "some_irregular" | "most_attend" | "all_attend" | null;
           debt_band?: "no_debt" | "small_manageable" | "high_burden" | "very_high_risk" | null;
           debt_amount?: string | null;
+          debt_note?: string | null;
           farm_land_band?: "landless" | "small" | "medium" | "large" | null;
           farm_income_band?: "none" | "minimal" | "moderate" | "major" | null;
           plantation_land_band?: "landless" | "small" | "medium" | "large" | null;

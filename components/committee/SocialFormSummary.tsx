@@ -106,6 +106,7 @@ function buildSections(a: SocialAssessmentRow) {
     ]),
     section("Debt", CreditCard, [
       { label: "Debt Status", value: [labelFor(DEBT_OPTS, a.debt_band), a.debt_amount].filter(Boolean).join(" — ") },
+      { label: "Reason for Debt", value: a.debt_note ?? "" },
     ]),
     section("Farming, Plantation & Husbandry", Wheat, [
       { label: "Farm Land", value: labelFor(LAND_OPTS, a.farm_land_band) ?? "" },

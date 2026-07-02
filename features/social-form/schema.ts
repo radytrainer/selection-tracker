@@ -54,6 +54,7 @@ export const socialFormSchema = z.object({
 
   debt_band: z.enum(["no_debt", "small_manageable", "high_burden", "very_high_risk"]).optional(),
   debt_amount: z.string().optional().or(z.literal("")),
+  debt_note: z.string().optional().or(z.literal("")),
 
   farm_land_band: z.enum(["landless", "small", "medium", "large"]).optional(),
   farm_income_band: z.enum(["none", "minimal", "moderate", "major"]).optional(),

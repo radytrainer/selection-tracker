@@ -118,6 +118,7 @@ const DEFAULT_VALUES: SocialFormValues = {
   school_aged_children_studying: "",
   school_aged_children_working: "",
   debt_amount: "",
+  debt_note: "",
   vulnerability_orphan_single_parent: false,
   vulnerability_disability: false,
   vulnerability_chronic_illness: false,
@@ -282,7 +283,11 @@ export function SocialForm({
       step: 6,
       title: "Debt",
       icon: CreditCard,
-      rows: [{ label: "Debt Status", value: labelFor(DEBT_OPTS, values.debt_band) ?? "" }].filter((r) => r.value),
+      rows: [
+        { label: "Debt Status", value: labelFor(DEBT_OPTS, values.debt_band) ?? "" },
+        { label: "Amount", value: values.debt_amount ?? "" },
+        { label: "Reason", value: values.debt_note ?? "" },
+      ].filter((r) => r.value),
     },
     {
       step: 7,
@@ -744,6 +749,18 @@ export function SocialForm({
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="debt_note"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reason for Debt</FormLabel>
+                  <FormControl>
+                    <Textarea rows={3} placeholder="Explain what caused the debt..." {...field} />
                   </FormControl>
                 </FormItem>
               )}

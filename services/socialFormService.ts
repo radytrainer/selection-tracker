@@ -48,6 +48,7 @@ type SaveInput = SocialFormScoreInput & {
   school_aged_children_studying: number | null;
   school_aged_children_working: number | null;
   debt_amount: string | null;
+  debt_note: string | null;
   poverty_certificate: string | null;
   distance_from_town: string | null;
   visitor_name: string | null;
@@ -99,6 +100,7 @@ export async function saveSocialAssessment(input: SaveInput) {
     school_attendance_band: input.school_attendance_band,
     debt_band: input.debt_band,
     debt_amount: input.debt_amount,
+    debt_note: input.debt_note,
     farm_land_band: input.farm_land_band,
     farm_income_band: input.farm_income_band,
     plantation_land_band: input.plantation_land_band,
