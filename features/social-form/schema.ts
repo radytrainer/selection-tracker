@@ -19,6 +19,9 @@ export const socialFormSchema = z.object({
   mother_age: z.string().optional().or(z.literal("")),
   mother_job: z.string().optional().or(z.literal("")),
   mother_income: z.string().optional().or(z.literal("")),
+  child1_income: z.string().optional().or(z.literal("")),
+  child2_income: z.string().optional().or(z.literal("")),
+  child3_income: z.string().optional().or(z.literal("")),
   parent_occupation_band: z
     .enum(["unemployed", "daily_laborer", "farmer", "mother", "small_business", "stable_salaried"])
     .optional(),

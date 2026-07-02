@@ -77,6 +77,10 @@ function buildSections(a: SocialAssessmentRow) {
           .filter(Boolean)
           .join(" · "),
       },
+      {
+        label: "Children's Income",
+        value: [a.child1_income, a.child2_income, a.child3_income].filter(Boolean).join(" · "),
+      },
     ]),
     section("Housing & Utilities", HomeIcon, [
       { label: "House Owner", value: a.house_owner ?? "" },

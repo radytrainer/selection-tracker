@@ -109,6 +109,9 @@ const DEFAULT_VALUES: SocialFormValues = {
   mother_age: "",
   mother_job: "",
   mother_income: "",
+  child1_income: "",
+  child2_income: "",
+  child3_income: "",
   house_owner: "",
   assets_furniture: 0,
   assets_transport: 0,
@@ -237,6 +240,10 @@ export function SocialForm({
         { label: "Mother's Occupation", value: labelFor(PARENT_OCCUPATION_OPTS, values.mother_occupation_band) ?? "" },
         { label: "Father", value: [values.father_age, values.father_job, values.father_income].filter(Boolean).join(" · ") },
         { label: "Mother", value: [values.mother_age, values.mother_job, values.mother_income].filter(Boolean).join(" · ") },
+        {
+          label: "Children's Income",
+          value: [values.child1_income, values.child2_income, values.child3_income].filter(Boolean).join(" · "),
+        },
       ].filter((r) => r.value),
     },
     {
@@ -533,6 +540,44 @@ export function SocialForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mother&apos;s Salary/Income</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <FormField
+                control={form.control}
+                name="child1_income"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Child 1 Income</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="child2_income"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Child 2 Income</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="child3_income"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Child 3 Income</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>

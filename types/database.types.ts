@@ -572,6 +572,9 @@ export type Database = {
           mother_age: number | null;
           mother_job: string | null;
           mother_income: string | null;
+          child1_income: string | null;
+          child2_income: string | null;
+          child3_income: string | null;
           parent_occupation_band:
             | "unemployed"
             | "daily_laborer"
@@ -673,6 +676,9 @@ export type Database = {
           mother_age?: number | null;
           mother_job?: string | null;
           mother_income?: string | null;
+          child1_income?: string | null;
+          child2_income?: string | null;
+          child3_income?: string | null;
           parent_occupation_band?:
             | "unemployed"
             | "daily_laborer"
