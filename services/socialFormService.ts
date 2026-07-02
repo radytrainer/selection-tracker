@@ -37,8 +37,10 @@ type SaveInput = SocialFormScoreInput & {
   dependents_note: string | null;
   father_age: number | null;
   father_job: string | null;
+  father_income: string | null;
   mother_age: number | null;
   mother_job: string | null;
+  mother_income: string | null;
   father_occupation_band?: string | null;
   mother_occupation_band?: string | null;
   house_owner: string | null;
@@ -73,8 +75,10 @@ export async function saveSocialAssessment(input: SaveInput) {
     dependents_note: input.dependents_note,
     father_age: input.father_age,
     father_job: input.father_job,
+    father_income: input.father_income,
     mother_age: input.mother_age,
     mother_job: input.mother_job,
+    mother_income: input.mother_income,
     parent_occupation_band: input.parent_occupation_band,
     father_occupation_band: input.father_occupation_band ?? null,
     mother_occupation_band: input.mother_occupation_band ?? null,

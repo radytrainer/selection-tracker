@@ -568,8 +568,10 @@ export type Database = {
           dependents_note: string | null;
           father_age: number | null;
           father_job: string | null;
+          father_income: string | null;
           mother_age: number | null;
           mother_job: string | null;
+          mother_income: string | null;
           parent_occupation_band:
             | "unemployed"
             | "daily_laborer"
@@ -667,8 +669,10 @@ export type Database = {
           dependents_note?: string | null;
           father_age?: number | null;
           father_job?: string | null;
+          father_income?: string | null;
           mother_age?: number | null;
           mother_job?: string | null;
+          mother_income?: string | null;
           parent_occupation_band?:
             | "unemployed"
             | "daily_laborer"

@@ -67,13 +67,13 @@ function buildSections(a: SocialAssessmentRow) {
       { label: "Parent Occupation", value: labelFor(PARENT_OCCUPATION_OPTS, a.parent_occupation_band) ?? "" },
       {
         label: "Father",
-        value: [a.father_age, a.father_job, labelFor(PARENT_EDUCATION_OPTS, a.father_education_band)]
+        value: [a.father_age, a.father_job, a.father_income, labelFor(PARENT_EDUCATION_OPTS, a.father_education_band)]
           .filter(Boolean)
           .join(" · "),
       },
       {
         label: "Mother",
-        value: [a.mother_age, a.mother_job, labelFor(PARENT_EDUCATION_OPTS, a.mother_education_band)]
+        value: [a.mother_age, a.mother_job, a.mother_income, labelFor(PARENT_EDUCATION_OPTS, a.mother_education_band)]
           .filter(Boolean)
           .join(" · "),
       },
