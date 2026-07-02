@@ -152,11 +152,6 @@ export type CommitteeDossier = {
     pass_status: string | null;
   } | null;
   interviews: {
-    communication_score: number | null;
-    leadership_score: number | null;
-    motivation_score: number | null;
-    confidence_score: number | null;
-    critical_thinking_score: number | null;
     comments: string | null;
     recommendation: string | null;
   } | null;
@@ -176,7 +171,7 @@ const DOSSIER_SELECT = `
   district_name, commune_name, village_name, family_income_monthly,
   provinces(name_en), school_partners(school_name), ngo_partners(organization_name),
   exam_results(math_score, english_score, logic_score, computer_score, total_score, rank_in_cycle, rank_in_province, pass_status),
-  interviews(communication_score, leadership_score, motivation_score, confidence_score, critical_thinking_score, comments, recommendation),
+  interviews(comments, recommendation),
   social_assessments(*),
   student_documents(doc_type, file_path, uploaded_at),
   committee_decisions(decision, decision_date, poor_level, approval_status),
